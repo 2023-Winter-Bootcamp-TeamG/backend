@@ -1,0 +1,24 @@
+venv/
+env/
+ENV/
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+.Python
+/local_settings.py
+/settings/local.py
+db.sqlite3
+db.sqlite3-journal
+/media/
+/static/
+/assets/
+*.log
+.idea/
+.vscode/
+*.sublime-workspace
+.DS_Store  # MacOS 파일
+Thumbs.db  # Windows 파일
+ehthumbs.db
+.sass-cache/
+*.bak
