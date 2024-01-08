@@ -85,7 +85,7 @@ DATABASES = {
         'NAME': "testdb",
         'USER': "admin",
         'PASSWORD': "root",
-        'HOST': 'mysqldb', # 호스트는 도커 컨테이너 이름 127.0.0.1
+        'HOST': '127.0.0.1', # 호스트는 도커 컨테이너 이름 127.0.0.1 / mysqldb
         'PORT': '3306',
     },
 }
