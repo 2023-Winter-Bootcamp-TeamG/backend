@@ -81,10 +81,15 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': "testdb",
+        'USER': "admin",
+        'PASSWORD': "root",
+        'HOST': 'mysqldb', # 호스트는 도커 컨테이너 이름 127.0.0.1
+        'PORT': '3306',
+    },
 }
+
 
 
 # Password validation
