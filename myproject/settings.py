@@ -158,4 +158,8 @@ STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 # 미디어 파일 저장을 위한 설정
 AWS_S3_MEDIA_LOCATION = 'media'
-DEFAULT_FILE_STORAGE = 'myproject.storage_backends.MediaStorage'
+# 기본 파일 스토리지를 S3 버킷으로 설정
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+# 파일 업로드 경로 or 파일명 등 커스터마이징 해야하면 이걸로
+# DEFAULT_FILE_STORAGE = 'myproject.storage_backends.MediaStorage'
