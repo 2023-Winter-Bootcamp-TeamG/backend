@@ -10,10 +10,11 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from .serializers import PhotoSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from .serializers import PhotoDetailSerializer
 
 # Create your views here.
-# 이미지 업로드 뷰
-class PhotoUploadView(APIView):
+# 앨범 관련 뷰
+class PhotoManageView(APIView):
     parser_classes = [MultiPartParser, FormParser] # 파일과 폼 데이터 처리
     @swagger_auto_schema(
         request_body=PhotoSerializer,
@@ -43,6 +44,35 @@ class PhotoUploadView(APIView):
 
         # Photo 객체를 JSON 형식으로 직렬화
         serializer = PhotoSerializer(photos, many=True)
+
+        # 직렬화된 데이터를 응답으로 반환
+        return Response(serializer.data)
+
+class PhotoDetailView(APIView):
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'member_id', openapi.IN_QUERY,
+                description="Member's ID",
+                type=openapi.TYPE_INTEGER
+            )
+        ],
+        responses={200: PhotoDetailSerializer(many=False)}
+    )
+    def get(self, request, id, *args, **kwargs):
+        # URL 경로에서 photo_id와 쿼리 파라미터에서 member_id 가져오기
+        member_id = request.query_params.get('member_id')
+
+        try:
+            # Photo 객체를 id와 member_id를 기준으로 찾음
+            photo = Photo.objects.get(id=id, member_id=member_id)
+        except Photo.DoesNotExist:
+            # 해당 조건을 만족하는 Photo 객체가 없으면 404 에러 반환
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        # Photo 객체를 직렬화
+        serializer = PhotoDetailSerializer(photo)
 
         # 직렬화된 데이터를 응답으로 반환
         return Response(serializer.data)
