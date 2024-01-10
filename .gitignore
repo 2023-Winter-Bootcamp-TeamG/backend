@@ -22,3 +22,4 @@ Thumbs.db  # Windows 파일
 ehthumbs.db
 .sass-cache/
 *.bak
+.env
