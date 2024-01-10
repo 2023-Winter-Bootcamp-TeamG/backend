@@ -2,6 +2,6 @@ from django.urls import path
 from .views import PhotoUploadView
 
 urlpatterns = [
-    # 회원가입 경로
-    path('api/v1/photos/', PhotoUploadView.as_view(), name='save_photo'),
+    # 사진 저장/전체 불러오기
+    path('api/v1/photos/', PhotoUploadView.as_view(), name='album_photo'),
     ]
