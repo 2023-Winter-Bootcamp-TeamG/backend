@@ -1,3 +1,4 @@
+import boto3
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -9,6 +10,8 @@ from rembg import remove
 import uuid
 import os
 from rest_framework.parsers import MultiPartParser, FormParser
+from drf_yasg import openapi
+from myproject import settings
 
 class StickerManageView(APIView):
     parser_classes = [MultiPartParser, FormParser]  # 파일과 폼 데이터 처리
@@ -40,4 +43,42 @@ class StickerManageView(APIView):
 
         return Response(StickerSerializer(sticker).data, status=status.HTTP_201_CREATED)
 
+# 스티커 삭제 뷰
+class StickerDeleteView(APIView):
+    @swagger_auto_schema(
+        operation_description="Delete a sticker by ID",
+        manual_parameters=[
+            openapi.Parameter(
+                'id', openapi.IN_PATH,
+                description="ID of the sticker to delete",
+                type=openapi.TYPE_INTEGER,
+                required=True,
+            ),
+        ],
+        responses={204: "No Content"}
+    )
+    def delete(self, request, *args, **kwargs):
+        # 여기에 사용자 인증 로직 추가해야됨
+        sticker_id = kwargs.get("id")
+        if not sticker_id:
+            return Response({"error": "Sticker ID is required"}, status=status.HTTP_400_BAD_REQUEST)
 
+        try:
+            sticker = Sticker.objects.get(id=sticker_id)
+        except Sticker.DoesNotExist:
+            return Response({"error": "Sticker not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # S3에서 스티커 파일 삭제
+        s3 = boto3.client('s3')
+        image_url = sticker.image.name  # 스티커 파일의 S3 경로
+        bucket_name = settings.AWS_STORAGE_BUCKET_NAME
+
+        try:
+            s3.delete_object(Bucket=bucket_name, Key=image_url)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Sticker 모델에서 삭제
+        sticker.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
