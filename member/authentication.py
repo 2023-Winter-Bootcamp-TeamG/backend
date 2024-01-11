@@ -12,6 +12,8 @@ class MemberAuthenticationBackend(BaseBackend):
         except Member.DoesNotExist:
             return None
 
+    # 장고의 기본 모델을 user가 아닌 Member로 설정
+    # 즉 이제 request.user가 Member 인스턴스를 반환함
     def get_user(self, user_id):
         try:
             return Member.objects.get(pk=user_id)
