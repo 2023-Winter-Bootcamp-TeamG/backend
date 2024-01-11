@@ -17,6 +17,7 @@ class StickerManageView(APIView):
         request_body=StickerSerializer,
         responses={201: StickerSerializer}
     )
+    # 사용자가 업로드한 이미지를 배경제거 한 후 S3에 저장
     def post(self, request, *args, **kwargs):
         image_file = request.FILES.get('image') # request의 image를 가져옴
         if not image_file:
@@ -40,4 +41,21 @@ class StickerManageView(APIView):
 
         return Response(StickerSerializer(sticker).data, status=status.HTTP_201_CREATED)
 
+    @swagger_auto_schema(
+        operation_description="Retrieve all stickers for the current authenticated user",
+        responses={
+            200: StickerSerializer(many=True),
+            401: 'Unauthorized - User not authenticated'
+        }
+    )
+    # 현재 사용자의 모든 스티커 반환
+    def get(self, request, *args, **kwargs):
+        # 현재 인증된 사용자의 member_id와 일치하는지 확인
+        if request.user.is_authenticated:
+            member_id = request.user.id # 현재 사용자의 id 저장
+            stickers = Sticker.objects.filter(member_id=member_id) # 현재 사용자의 id를 외래키로 가지는 Sticker들
+            serializer = StickerSerializer(stickers, many=True)
+            return Response(serializer.data)
+        else:
+            return Response({"error": "User not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
 
