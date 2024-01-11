@@ -11,3 +11,8 @@ class PhotoDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Photo
         fields = ['url', 'title']
+
+class PhotoUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Photo
+        fields = ['url']

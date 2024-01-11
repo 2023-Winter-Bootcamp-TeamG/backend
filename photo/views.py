@@ -1,5 +1,5 @@
 import uuid
-
+import boto3 # AWS 서비스 지원
 from django.core.files.base import ContentFile
 from django.shortcuts import render
 from django.http import JsonResponse
@@ -15,6 +15,8 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from .serializers import PhotoDetailSerializer
 import os
+from myproject import settings
+from .serializers import PhotoUpdateSerializer
 
 # Create your views here.
 # 앨범 관련 뷰
@@ -102,9 +104,33 @@ class PhotoDetailView(APIView):
         # 직렬화된 데이터를 응답으로 반환
         return Response(serializer.data)
 
-# class PhotoListCreateView(generics.ListCreateAPIView):
-#     queryset = Photo.objects.all()
-#     serializer_class = PhotoSerializer
-#
-#     def perform_create(self, serializer):
-#         serializer.save(user=self.request.user)
+class PhotoUpdateView(APIView):
+    parser_classes = [MultiPartParser, FormParser]
+    # 사진 수정
+    @swagger_auto_schema(
+        operation_description="Update a photo",
+        manual_parameters=[
+            openapi.Parameter(
+                'id', openapi.IN_PATH,
+                description="id of photo",
+                type=openapi.TYPE_INTEGER,
+                required=True,
+            ),
+        ],
+        request_body=PhotoUpdateSerializer,
+        responses={200: "Success"}
+    )
+    def patch(self, request, *args, **kwargs):
+        image_file=request.FILES.get('url')
+        if not image_file:
+            return Response({"Error":"photo is not exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+        photo_id=kwargs.get("id")
+        if not photo_id:
+            return Response({"Error":"photo id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            photo=Photo.objects.get(id=photo_id)
+        except Photo.DoesNotExist:
+            return Response({"Error":"photo not found"}, status=status.HTTP_404_NOT_FOUND)
