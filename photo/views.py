@@ -1,3 +1,6 @@
+import uuid
+
+from django.core.files.base import ContentFile
 from django.shortcuts import render
 from django.http import JsonResponse
 from .models import Photo
@@ -11,24 +14,46 @@ from .serializers import PhotoSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from .serializers import PhotoDetailSerializer
+import os
 
 # Create your views here.
 # 앨범 관련 뷰
 class PhotoManageView(APIView):
     parser_classes = [MultiPartParser, FormParser] # 파일과 폼 데이터 처리
     @swagger_auto_schema(
+        operation_description="upload a new photo",
         request_body=PhotoSerializer,
-        response={201: PhotoSerializer(many=False)}
+        response={201: PhotoSerializer}
     )
 
     # 사진을 앨범에 업로드
     def post(self, request, *args, **kwargs):
-        serializer = PhotoSerializer(data=request.data)
+        image_file = request.FILES.get('url') # request의 url을 가져옴
+        if not image_file:
+            return Response({"error": "No image provided"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # 이미지 파일의 확장자 추출
+        extension = os.path.splitext(image_file.name)[1]
+
+        # 고유한 파일명 생성(S3는 같은 이름의 파일을 업로드할 시 덮어쓰기 때문)
+        image_name = f"{uuid.uuid4()}{extension}"
+
+        image_data = image_file.read()
+
+        result_image_file = ContentFile(image_data, name=image_name)
+
+        photo = Photo(member_id = request.user.id, url = result_image_file)
+        photo.save()
+
+        return Response(PhotoSerializer(photo).data, status=status.HTTP_201_CREATED)
+
+        # serializer = PhotoSerializer(data=request.data)
+        #
+        #
+        # if serializer.is_valid():
+        #     serializer.save()
+        #     return Response(serializer.data, status=status.HTTP_201_CREATED)
+        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # 앨범에 저장된 전체 사진 보기
     def get(self, request, *args, **kwargs):
