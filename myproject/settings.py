@@ -137,12 +137,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# settings.py
-
-AUTHENTICATION_BACKENDS = [
-    'member.authentication.MemberAuthenticationBackend',
-]
-
 # 환경 변수 파일 로드
 load_dotenv()
 
@@ -169,3 +163,6 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 # 파일 업로드 경로 or 파일명 등 커스터마이징 해야하면 이걸로
 # DEFAULT_FILE_STORAGE = 'myproject.storage_backends.MediaStorage'
+
+# 사용자 모델을 Member로 설정
+AUTH_USER_MODEL = 'member.Member'
