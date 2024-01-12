@@ -2,12 +2,16 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .authentication import MemberAuthenticationBackend
 from .serializers import MemberRegistrationSerializer
 from drf_yasg import openapi
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.contrib.auth import authenticate, login
 
-#회원가입 뷰
+# swagger 테스트를 위한 일시적으로 csrf 보호 비활성화
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+
+#회원관리 뷰
 class MemberManageView(APIView):
     # 회원가입인 POST형 메소드에 대해서는 인증 절차 적용 안함
     def get_permissions(self):
@@ -38,7 +42,7 @@ class MemberManageView(APIView):
     )
     def delete(self, request):
         member = request.user # 요청을 보낸 사용자의 Member 인스턴스
-        member.delete()
+        member.delete() # 회원 삭제
 
         return Response({'message': 'Successfully deleted'}, status=status.HTTP_204_NO_CONTENT)
 
@@ -58,9 +62,9 @@ class LoginAPIView(APIView):
     def post(self, request, *args, **kwargs):
         email = request.data.get('email')
         password = request.data.get('password')
-        user = MemberAuthenticationBackend().authenticate(request, username=email, password=password)
+        user = authenticate(request, email=email, password=password) # 사용자 인증
         if user is not None:
-            # 여기서 사용자 세션 관리나 토큰 발행 등의 추가적인 작업을 할 수 있습니다.
+            login(request, user)
             return Response({
                 'nickname' : user.nickname,
                 'message': '로그인 성공!'
@@ -70,6 +74,7 @@ class LoginAPIView(APIView):
         }, status=status.HTTP_401_UNAUTHORIZED)
 
 # 로그아웃 뷰
+@method_decorator(csrf_exempt, name='dispatch') # swagger 테스트를 위한 일시적으로 csrf 보호 비활성화
 class LogoutAPIView(APIView):
     @swagger_auto_schema(
         operation_description="로그아웃 API",
