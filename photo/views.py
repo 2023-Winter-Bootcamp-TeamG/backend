@@ -1,7 +1,7 @@
 import uuid
 import boto3 # AWS 서비스 지원
 from django.core.files.base import ContentFile
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from .models import Photo
 from .forms import PhotoForm
@@ -75,8 +75,48 @@ class PhotoManageView(APIView):
         # 직렬화된 데이터를 응답으로 반환
         return Response(serializer.data)
 
-class PhotoDetailView(APIView):
+# 사진 삭제 뷰
+class PhotoDeleteView(APIView):
+    @swagger_auto_schema(
+        operation_description="Delete a photo by ID",
+        manual_parameters=[
+            openapi.Parameter(
+                'id', openapi.IN_PATH,
+                description="ID of the photo to delete",
+                type=openapi.TYPE_INTEGER,
+                required=True,
+            ),
+        ],
+        responses={204: "No Content"}
+    )
+    def delete(self, request, *args, **kwargs):
+        # 여기에 사용자 인증 로직 추가해야됨
+        photo_id = kwargs.get("id")
+        if not photo_id:
+            return Response({"error": "Photo ID is required"}, status=status.HTTP_400_BAD_REQUEST)
 
+        try:
+            photo = Photo.objects.get(id=photo_id)
+        except Photo.DoesNotExist:
+            return Response({"error": "Photo not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # S3에서 이미지 파일 삭제
+        s3 = boto3.client('s3')
+        image_url = photo.url.name  # 이미지 파일의 S3 경로
+        bucket_name = settings.AWS_STORAGE_BUCKET_NAME
+
+        try:
+            s3.delete_object(Bucket=bucket_name, Key=image_url)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Photo 모델에서 삭제
+        photo.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PhotoDetailView(APIView):
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter(

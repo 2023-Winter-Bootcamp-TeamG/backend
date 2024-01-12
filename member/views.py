@@ -5,9 +5,16 @@ from rest_framework.views import APIView
 from .authentication import MemberAuthenticationBackend
 from .serializers import MemberRegistrationSerializer
 from drf_yasg import openapi
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 #회원가입 뷰
-class MemberRegistrationAPIView(APIView):
+class MemberManageView(APIView):
+    # 회원가입인 POST형 메소드에 대해서는 인증 절차 적용 안함
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
     @swagger_auto_schema(
         request_body=MemberRegistrationSerializer,
         responses={201: '회원가입 완료', 400: '잘못된 요청'}
@@ -21,6 +28,19 @@ class MemberRegistrationAPIView(APIView):
                 'message': '회원가입 완료.'
             }, status = status.HTTP_201_CREATED)
         return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(
+        operation_description="Delete the authenticated user's account.",
+        responses={
+            204: 'Successfully deleted',
+            403: 'Not authenticated',
+        }
+    )
+    def delete(self, request):
+        member = request.user # 요청을 보낸 사용자의 Member 인스턴스
+        member.delete()
+
+        return Response({'message': 'Successfully deleted'}, status=status.HTTP_204_NO_CONTENT)
 
 # 로그인 뷰
 class LoginAPIView(APIView):
