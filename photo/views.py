@@ -125,12 +125,24 @@ class PhotoUpdateView(APIView):
         if not image_file:
             return Response({"Error":"photo is not exist"}, status=status.HTTP_400_BAD_REQUEST)
 
-
         photo_id=kwargs.get("id")
         if not photo_id:
             return Response({"Error":"photo id is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             photo=Photo.objects.get(id=photo_id)
+
+            # 기본 photo 객체의 이미지 파일명 사용
+            original_file_name = os.path.basename(photo.url.name)
+
+            image_data = image_file.read()
+            result_image_file = ContentFile(image_data, name=original_file_name)
+
+            # 기존 Photo 객체의 url 필드 업데이트
+            photo.url = result_image_file
+            photo.save()
+            return Response({"Message": "Photo updated successfully"}, status=status.HTTP_200_OK)
+
+
         except Photo.DoesNotExist:
             return Response({"Error":"photo not found"}, status=status.HTTP_404_NOT_FOUND)
