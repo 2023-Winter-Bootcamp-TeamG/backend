@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import PhotoManageView, PhotoDetailView, PhotoDeleteView
+from .views import PhotoManageView, PhotoDetailView, PhotoDeleteView, PhotoUpdateView
 
 urlpatterns = [
     # 사진 저장/삭제/전체 불러오기
