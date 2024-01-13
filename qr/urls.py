@@ -4,5 +4,5 @@ from .views import QRAPIView
 
 urlpatterns = [
     # qr 생성 경로
-    path('api/v1/qr', QRAPIView.as_view(), name='qr'),
+    path('api/v1/qr/<int:id>', QRAPIView.as_view(), name='get qr code'),
 ]

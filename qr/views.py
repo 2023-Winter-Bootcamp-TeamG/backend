@@ -12,27 +12,15 @@ import base64
 # from rest_framework.permissions import IsAuthenticated
 
 class QRAPIView(APIView):
-
-    # permission_classes = [IsAuthenticated] #인증된 사용자만 허용
-    
-
-    @swagger_auto_schema(
-            
-        operation_description="qr코드 생성 API",
-        manual_parameters=[
-            openapi.Parameter('photo_id', openapi.IN_QUERY, description="Photo id", type=openapi.TYPE_INTEGER),
-        ],
-        responses={200: '생성 성공', 404: '사진이 없습니다'}
-    )
     def get(self, request, *args, **kwargs):
-        # 사용자가 이미 로그인되어 있는지 확인
-        # if not request.user.is_authenticated:
-        #     return Response({'error': '로그인이 필요합니다.'}, status=status.HTTP_401_UNAUTHORIZED)
+        photo_id = kwargs.get("id")
 
-        photo_id = request.GET.get('photo_id')
-        print('photo id is : ', photo_id)
         try:
             photo = Photo.objects.get(id=photo_id)
+
+            if photo.member_id != request.user:
+                return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
         except Photo.DoesNotExist:
             return Response({'error': 'Photo not found'}, status=status.HTTP_404_NOT_FOUND)
         
