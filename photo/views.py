@@ -17,7 +17,7 @@ from .serializers import PhotoLoadSerializer
 import os
 from myproject import settings
 from .serializers import PhotoUpdateSerializer, PhotoDetailSerializer
-from .tasks import save_photo_model, delete_from_s3
+from .tasks import save_photo_model, delete_from_s3, update_photo
 
 # swagger 테스트를 위한 일시적으로 csrf 보호 비활성화
 from django.views.decorators.csrf import csrf_exempt
@@ -99,6 +99,7 @@ class PhotoDeleteView(APIView):
 
         image_url = photo.url.name  # 이미지 파일의 S3 경로
 
+        # S3에 업로드 되었던 이미지 삭제 비동기 처리
         delete_from_s3.delay(image_url)
 
         # Photo 모델에서 삭제
@@ -162,12 +163,11 @@ class PhotoUpdateView(APIView):
             original_file_name = os.path.basename(photo.url.name)
 
             image_data = image_file.read()
-            result_image_file = ContentFile(image_data, name=original_file_name)
 
-            # 기존 Photo 객체의 url 필드 업데이트
-            photo.url = result_image_file
-            photo.save()
-            return Response({"Message": "Photo updated successfully"}, status=status.HTTP_200_OK)
+            # photo 업데이트 비동기처리
+            update_photo.delay(photo_id, image_data, original_file_name)
+
+            return Response({"message": "Update processing started"}, status=status.HTTP_202_ACCEPTED)
 
 
         except Photo.DoesNotExist:

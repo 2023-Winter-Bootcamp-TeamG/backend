@@ -24,3 +24,13 @@ def delete_from_s3(image_url):
     bucket_name = settings.AWS_STORAGE_BUCKET_NAME
 
     s3.delete_object(Bucket=bucket_name, Key=image_url)
+
+@shared_task
+def update_photo(photo_id, image_data, original_file_name):
+    photo = Photo.objects.get(id=photo_id)
+
+    result_image_file = ContentFile(image_data, name=original_file_name)
+
+    # 기존 Photo 객체의 url 필드 업데이트
+    photo.url = result_image_file
+    photo.save()
