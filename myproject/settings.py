@@ -166,3 +166,8 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 # 사용자 모델을 Member로 설정
 AUTH_USER_MODEL = 'member.Member'
+
+# Celery 메세지 브로커 설정
+CELERY_BROKER_URL = 'amqp://user:password@rabbitmq:5672/'
+
+
