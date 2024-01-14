@@ -17,7 +17,7 @@ from .serializers import PhotoLoadSerializer
 import os
 from myproject import settings
 from .serializers import PhotoUpdateSerializer, PhotoDetailSerializer
-from .tasks import save_photo_model
+from .tasks import save_photo_model, delete_from_s3, update_photo
 
 # swagger 테스트를 위한 일시적으로 csrf 보호 비활성화
 from django.views.decorators.csrf import csrf_exempt
@@ -52,6 +52,7 @@ class PhotoManageView(APIView):
         # 이미지를 데이터형식으로 전환
         image_data = image_file.read()
 
+        # S3 업로드 및 Photo 객체 저장 비동기 처리
         save_photo_model.delay(image_data, image_title, extension, member_id)
 
         return Response({"message": "Save processing started"}, status=status.HTTP_202_ACCEPTED)
@@ -96,20 +97,15 @@ class PhotoDeleteView(APIView):
         except Photo.DoesNotExist:
             return Response({"error": "Photo not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # S3에서 이미지 파일 삭제
-        s3 = boto3.client('s3')
         image_url = photo.url.name  # 이미지 파일의 S3 경로
-        bucket_name = settings.AWS_STORAGE_BUCKET_NAME
 
-        try:
-            s3.delete_object(Bucket=bucket_name, Key=image_url)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # S3에 업로드 되었던 이미지 삭제 비동기 처리
+        delete_from_s3.delay(image_url)
 
         # Photo 모델에서 삭제
         photo.delete()
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "Delete processing started"}, status=status.HTTP_202_ACCEPTED)
 
 
 class PhotoDetailView(APIView):
@@ -167,12 +163,11 @@ class PhotoUpdateView(APIView):
             original_file_name = os.path.basename(photo.url.name)
 
             image_data = image_file.read()
-            result_image_file = ContentFile(image_data, name=original_file_name)
 
-            # 기존 Photo 객체의 url 필드 업데이트
-            photo.url = result_image_file
-            photo.save()
-            return Response({"Message": "Photo updated successfully"}, status=status.HTTP_200_OK)
+            # photo 업데이트 비동기처리
+            update_photo.delay(photo_id, image_data, original_file_name)
+
+            return Response({"message": "Update processing started"}, status=status.HTTP_202_ACCEPTED)
 
 
         except Photo.DoesNotExist:

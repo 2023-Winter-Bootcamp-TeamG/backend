@@ -12,6 +12,7 @@ import os
 from rest_framework.parsers import MultiPartParser, FormParser
 from drf_yasg import openapi
 from myproject import settings
+from .tasks import save_sticker_model, delete_from_s3
 
 class StickerManageView(APIView):
     parser_classes = [MultiPartParser, FormParser]  # 파일과 폼 데이터 처리
@@ -25,27 +26,21 @@ class StickerManageView(APIView):
         if not request.user:
             return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
+        member_id = request.user.id
+
         image_file = request.FILES.get('image') # request의 image를 가져옴
         if not image_file:
             return Response({"error": "No image provided"}, status=status.HTTP_400_BAD_REQUEST)
 
         input_image = image_file.read() # 이미지를 바이트 데이터로 변환
-        output_image = remove(input_image) #변환된 바이트 데이터의 배경 제거
 
         # 원본 파일의 확장자 추출
         extension = os.path.splitext(image_file.name)[1]
 
-        # 고유한 파일명 생성(S3는 같은 이름의 파일을 업로드할 시 덮어쓰기 때문)
-        image_name = f"{uuid.uuid4()}{extension}"
+        # sticker S3 업로드 및 모델 저장 비동기처리
+        save_sticker_model.delay(input_image, extension, member_id)
 
-        # S3에 업로드 할 최종 이미지
-        output_image_file = ContentFile(output_image, name=image_name)
-
-        # Sticker 인스턴스 생성 및 저장
-        sticker = Sticker(member_id = request.user, image = output_image_file)
-        sticker.save()
-
-        return Response(StickerSerializer(sticker).data, status=status.HTTP_201_CREATED)
+        return Response({"message": "Save processing started"}, status=status.HTTP_202_ACCEPTED)
 
     # 현재 사용자의 모든 스티커 반환
     def get(self, request, *args, **kwargs):
@@ -81,20 +76,16 @@ class StickerDeleteView(APIView):
             sticker = Sticker.objects.get(id=sticker_id)
             if sticker.member_id != request.user:
                 return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
-
         except Sticker.DoesNotExist:
             return Response({"error": "Sticker not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # S3에서 스티커 파일 삭제
-        s3 = boto3.client('s3')
-        image_url = sticker.image.name  # 스티커 파일의 S3 경로
-        bucket_name = settings.AWS_STORAGE_BUCKET_NAME
 
-        try:
-            s3.delete_object(Bucket=bucket_name, Key=image_url)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        image_url = sticker.image.name  # 스티커 파일의 S3 경로
+
+        # S3에서 스티커 파일 삭제 비동기처리
+        delete_from_s3.delay(image_url)
 
         # Sticker 모델에서 삭제
         sticker.delete()
-        
+
+        return Response({"message": "Delete processing started"}, status=status.HTTP_202_ACCEPTED)
