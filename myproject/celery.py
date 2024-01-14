@@ -7,8 +7,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myproject.settings')
 
 app = Celery('myproject')
 
-# 여기서 'myproject'는 당신의 Django 프로젝트 이름입니다.
-
 # Celery 설정을 Django 설정에서 불러오기
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
