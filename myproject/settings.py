@@ -86,7 +86,7 @@ DATABASES = {
         'NAME': "testdb",
         'USER': "admin",
         'PASSWORD': "root",
-        'HOST': '127.0.0.1', # 호스트는 도커 컨테이너 이름 127.0.0.1 / mysqldb
+        'HOST': 'mysqldb', # 호스트는 도커 컨테이너 이름 127.0.0.1 / mysqldb / localhost
         'PORT': '3306',
     },
 }
@@ -166,3 +166,8 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 # 사용자 모델을 Member로 설정
 AUTH_USER_MODEL = 'member.Member'
+
+# Celery 메세지 브로커 설정
+CELERY_BROKER_URL = 'amqp://user:password@rabbitmq:5672/' # rabbitmq / 음 일단 로컬에서 돌릴 떈 localhost로
+
+

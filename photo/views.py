@@ -17,6 +17,7 @@ from .serializers import PhotoLoadSerializer
 import os
 from myproject import settings
 from .serializers import PhotoUpdateSerializer, PhotoDetailSerializer
+from .tasks import save_photo_model, delete_from_s3, update_photo
 
 # swagger 테스트를 위한 일시적으로 csrf 보호 비활성화
 from django.views.decorators.csrf import csrf_exempt
@@ -30,13 +31,14 @@ class PhotoManageView(APIView):
     @swagger_auto_schema(
         operation_description="upload a new photo",
         request_body=PhotoSerializer,
-        response={201: PhotoSerializer}
+        response={202: "Save processing started"}
     )
 
     # 사진을 앨범에 업로드
     def post(self, request, *args, **kwargs):
         if not request.user.id:
             return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        member_id = request.user.id
 
         image_file = request.FILES.get('url') # request의 url을 가져옴
         image_title = request.POST.get('title') # request의 title을 가져옴
@@ -47,17 +49,13 @@ class PhotoManageView(APIView):
         # 이미지 파일의 확장자 추출
         extension = os.path.splitext(image_file.name)[1]
 
-        # 고유한 파일명 생성(S3는 같은 이름의 파일을 업로드할 시 덮어쓰기 때문)
-        image_name = f"{uuid.uuid4()}{extension}"
-
+        # 이미지를 데이터형식으로 전환
         image_data = image_file.read()
 
-        result_image_file = ContentFile(image_data, name=image_name)
+        # S3 업로드 및 Photo 객체 저장 비동기 처리
+        save_photo_model.delay(image_data, image_title, extension, member_id)
 
-        photo = Photo(member_id = request.user, url = result_image_file, title = image_title)
-        photo.save()
-
-        return Response(PhotoSerializer(photo).data, status=status.HTTP_201_CREATED)
+        return Response({"message": "Save processing started"}, status=status.HTTP_202_ACCEPTED)
 
     # 앨범에 저장된 전체 사진 보기
     def get(self, request, *args, **kwargs):
@@ -99,20 +97,15 @@ class PhotoDeleteView(APIView):
         except Photo.DoesNotExist:
             return Response({"error": "Photo not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # S3에서 이미지 파일 삭제
-        s3 = boto3.client('s3')
         image_url = photo.url.name  # 이미지 파일의 S3 경로
-        bucket_name = settings.AWS_STORAGE_BUCKET_NAME
 
-        try:
-            s3.delete_object(Bucket=bucket_name, Key=image_url)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # S3에 업로드 되었던 이미지 삭제 비동기 처리
+        delete_from_s3.delay(image_url)
 
         # Photo 모델에서 삭제
         photo.delete()
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "Delete processing started"}, status=status.HTTP_202_ACCEPTED)
 
 
 class PhotoDetailView(APIView):
@@ -170,12 +163,11 @@ class PhotoUpdateView(APIView):
             original_file_name = os.path.basename(photo.url.name)
 
             image_data = image_file.read()
-            result_image_file = ContentFile(image_data, name=original_file_name)
 
-            # 기존 Photo 객체의 url 필드 업데이트
-            photo.url = result_image_file
-            photo.save()
-            return Response({"Message": "Photo updated successfully"}, status=status.HTTP_200_OK)
+            # photo 업데이트 비동기처리
+            update_photo.delay(photo_id, image_data, original_file_name)
+
+            return Response({"message": "Update processing started"}, status=status.HTTP_202_ACCEPTED)
 
 
         except Photo.DoesNotExist:
