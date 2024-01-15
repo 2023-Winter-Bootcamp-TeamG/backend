@@ -155,7 +155,7 @@ AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazo
 # STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_S3_STATIC_LOCATION}/' <- 이걸로 했다가 S3에 정적파일 다 올림
 # STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 # 미디어 파일 저장을 위한 설정
 AWS_S3_MEDIA_LOCATION = 'media'
 # 기본 파일 스토리지를 S3 버킷으로 설정
