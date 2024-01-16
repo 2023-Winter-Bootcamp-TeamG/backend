@@ -8,8 +8,8 @@ from .models import Frame
 from .serializers import FrameSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
 from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
-# Create your views here.
 class FrameManageView(APIView):
     parser_classes = [MultiPartParser, FormParser]  # 파일과 폼 데이터 처리
 
@@ -41,6 +41,17 @@ class FrameManageView(APIView):
 
         frame.save()
 
+        return Response({"Successfully uploaded"}, status=status.HTTP_201_CREATED)
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'grid', openapi.IN_QUERY,
+                description="Grid parameter description",
+                type=openapi.TYPE_STRING
+            )
+        ]
+    )
     def get(self, request, *args, **kwargs):
         grid = request.GET.get('grid', None)
 
