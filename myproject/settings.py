@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'qr',
     'drf_yasg', #drf_yasg
     'rest_framework', #djangorestframework
+    'frame',
 ]
 
 MIDDLEWARE = [
