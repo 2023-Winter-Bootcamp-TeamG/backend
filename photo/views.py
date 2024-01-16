@@ -18,6 +18,8 @@ import os
 from myproject import settings
 from .serializers import PhotoUpdateSerializer, PhotoDetailSerializer
 from .tasks import save_photo_model, delete_from_s3, update_photo
+from django.core.paginator import Paginator, EmptyPage
+
 
 # swagger 테스트를 위한 일시적으로 csrf 보호 비활성화
 from django.views.decorators.csrf import csrf_exempt
@@ -58,15 +60,51 @@ class PhotoManageView(APIView):
         return Response({"message": "Save processing started"}, status=status.HTTP_202_ACCEPTED)
 
     # 앨범에 저장된 전체 사진 보기
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name='page',
+                in_=openapi.IN_QUERY,
+                description='Page number',
+                type=openapi.TYPE_INTEGER,
+                default=1
+            ),
+            openapi.Parameter(
+                name='size',
+                in_=openapi.IN_QUERY,
+                description='Number of items per page',
+                type=openapi.TYPE_INTEGER,
+                default=9
+            )
+        ]
+    )
     def get(self, request, *args, **kwargs):
         if not request.user.id:
             return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
+        page = request.GET.get('page', 1)
+        size = request.GET.get('size', 9)
+
+        try:
+            page = int(page)
+            size = int(size)
+        except ValueError:
+            return Response({"error": "Invalid page or size parameter"}, status=status.HTTP_400_BAD_REQUEST)
+
         # 현재 클라이언트의 사진만 필터링
         photos = Photo.objects.filter(member_id=request.user)
 
+        # Paginator 객체 생성
+        paginator = Paginator(photos, size)
+
+        # Paginator를 사용하여 요청된 페이지의 사진 가져오기
+        try:
+            photos_page = paginator.page(page)
+        except EmptyPage:
+            return Response({"error": "Page out of range"}, status=status.HTTP_404_NOT_FOUND)
+
         # Photo 객체를 JSON 형식으로 직렬화
-        serializer = PhotoLoadSerializer(photos, many=True)
+        serializer = PhotoLoadSerializer(photos_page, many=True)
 
         # 직렬화된 데이터를 응답으로 반환
         return Response(serializer.data)
