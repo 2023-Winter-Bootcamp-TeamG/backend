@@ -151,6 +151,9 @@ AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
 AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME')
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
 
+# Dall-E 키 설정
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+
 # 정적 파일 저장을 위한 설정
 # AWS_S3_STATIC_LOCATION = 'static'
 # STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_S3_STATIC_LOCATION}/' <- 이걸로 했다가 S3에 정적파일 다 올림

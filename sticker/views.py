@@ -1,4 +1,5 @@
 import boto3
+import openai
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -14,7 +15,8 @@ from drf_yasg import openapi
 from myproject import settings
 from .tasks import save_sticker_model, delete_from_s3
 from django.core.paginator import Paginator, EmptyPage
-
+from django.conf import settings
+from .serializers import AiStickerSerializer
 
 class StickerManageView(APIView):
     parser_classes = [MultiPartParser, FormParser]  # 파일과 폼 데이터 처리
@@ -128,3 +130,33 @@ class StickerDeleteView(APIView):
         sticker.delete()
 
         return Response({"message": "Delete processing started"}, status=status.HTTP_202_ACCEPTED)
+
+# Dall-E 키 설정
+openai.api_key = settings.OPENAI_API_KEY
+
+# AI 스티커
+class AiStickerView(APIView):
+    # AI 스티커 생성
+    @swagger_auto_schema(
+        operation_description="Generate an image based on the provided prompt",
+        request_body=AiStickerSerializer,
+        responses={200: AiStickerSerializer}
+    )
+    def post(self, request, *args, **kwargs):
+        prompt = request.data.get('prompt')
+        if not prompt:
+            return Response({'error':'No prompt provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # 이미지 생성
+            response = openai.Image.create(
+                prompts="a description of the image you want",
+                n=3,
+                size="500x500"
+            )
+
+            # 생성된 이미지의 URL 추출
+            aisticker_urls = [image_info['url'] for image_info in response['data']]
+            return Response({'aisticker_urls': aisticker_urls})
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
