@@ -142,7 +142,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 load_dotenv()
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+AI_STICKER_KEY = os.getenv('OPENAI_API_KEY')
 
 # AWS S3 설정
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')

@@ -7,5 +7,12 @@ class StickerSerializer(serializers.ModelSerializer):
         fields = ['id', 'member_id', 'image', 'created_at', 'updated_at', 'deleted_at']
         read_only_fields = ['id', 'member_id', 'created_at', 'updated_at', 'deleted_at']
 
-class AiStickerSerializer(serializers.Serializer):
-    image_url = serializers.URLField(help_text="URL of the generated image.")
+
+class ImagePromptRequestSerializer(serializers.Serializer):
+    prompt = serializers.CharField(required=True, help_text="Text prompt for the image generation.")
+
+class ImageGenerationResponseSerializer(serializers.Serializer):
+    aisticker_urls = serializers.ListField(
+        child=serializers.URLField(),
+        help_text="List of generated image URLs."
+    )
