@@ -16,7 +16,6 @@ from drf_yasg import openapi
 from myproject.settings import AI_STICKER_KEY
 from .tasks import save_sticker_model, delete_from_s3
 from django.core.paginator import Paginator, EmptyPage
-from .serializers import AiStickerSerializer
 
 class StickerManageView(APIView):
     parser_classes = [MultiPartParser, FormParser]  # 파일과 폼 데이터 처리
