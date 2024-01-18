@@ -84,11 +84,11 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': "testdb",
-        'USER': "admin",
-        'PASSWORD': "root",
-        'HOST': 'mysqldb', # 호스트는 도커 컨테이너 이름 127.0.0.1 / mysqldb / localhost
-        'PORT': '3306',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'), # 호스트는 도커 컨테이너 이름 127.0.0.1 / mysqldb / localhost
+        'PORT': os.getenv('DB_PORT'),
     },
 }
 
@@ -169,6 +169,6 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 AUTH_USER_MODEL = 'member.Member'
 
 # Celery 메세지 브로커 설정
-CELERY_BROKER_URL = 'amqp://user:password@rabbitmq:5672/' # rabbitmq / 음 일단 로컬에서 돌릴 떈 localhost로
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
 
 
