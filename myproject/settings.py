@@ -142,7 +142,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 load_dotenv()
 
 # SECURITY WARNING: keep the secret key used in production secret!
-AI_STICKER_KEY = os.getenv('OPENAI_API_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # AWS S3 설정
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
@@ -152,7 +152,7 @@ AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME')
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
 
 # Dall-E 키 설정
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+AI_STICKER_KEY = os.getenv('OPENAI_API_KEY')
 
 # 정적 파일 저장을 위한 설정
 # AWS_S3_STATIC_LOCATION = 'static'
