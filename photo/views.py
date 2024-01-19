@@ -14,6 +14,7 @@ from .serializers import PhotoUpdateSerializer, PhotoDetailSerializer
 from .tasks import save_photo_model, delete_from_s3, update_photo
 from django.core.paginator import Paginator, EmptyPage
 from PIL import Image
+import re
 
 # Create your views here.
 # 앨범 관련 뷰
@@ -31,24 +32,23 @@ class PhotoManageView(APIView):
         member_id = request.user.id
 
         # base64 인코딩된 이미지 데이터를 받음
-        base64_image = request.POST.get('url') # request의 url을 가져옴
+        base64_image_with_prefix = request.POST.get('url') # request의 url을 가져옴
         image_title = request.POST.get('title') # request의 title을 가져옴
 
-        if not base64_image:
+        if not base64_image_with_prefix:
             return Response({"error": "No image provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        match = re.match(r'data:image/(?P<format>\w+);base64,(?P<data>.+)', base64_image_with_prefix)
+        if not match:
+            return Response({"error": "Invalid image data format"}, status=status.HTTP_400_BAD_REQUEST)
+
+        image_format = match.group('format')
+        base64_image = match.group('data')
+
+        extension = "." + image_format.lower() # 확장자 설정
 
         try:
             image_data = base64.b64decode(base64_image)
-            image_file = io.BytesIO(image_data)
-            image = Image.open(image_file)
-
-            # 이미지 형식에 따라 확장자 결정
-            if image.format == "JPEG":
-                extension = ".jpg"
-            elif image.format == "PNG":
-                extension = ".png"
-            else:
-                extension = ".jpg"  # 기본 확장자
         except Exception as e:
             return Response({"error": "Invalid image data: " + str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
