@@ -1,11 +1,6 @@
-import uuid
-import boto3 # AWS 서비스 지원
-from django.core.files.base import ContentFile
-from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
+import base64
+import io
 from .models import Photo
-from .forms import PhotoForm
-from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -15,21 +10,14 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from .serializers import PhotoLoadSerializer
 import os
-from myproject import settings
 from .serializers import PhotoUpdateSerializer, PhotoDetailSerializer
 from .tasks import save_photo_model, delete_from_s3, update_photo
 from django.core.paginator import Paginator, EmptyPage
-
-
-# swagger 테스트를 위한 일시적으로 csrf 보호 비활성화
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
+from PIL import Image
 
 # Create your views here.
 # 앨범 관련 뷰
-@method_decorator(csrf_exempt, name='dispatch')  # swagger 테스트를 위한 일시적으로 csrf 보호 비활성화
 class PhotoManageView(APIView):
-    parser_classes = [MultiPartParser, FormParser] # 파일과 폼 데이터 처리
     @swagger_auto_schema(
         operation_description="upload a new photo",
         request_body=PhotoSerializer,
@@ -42,17 +30,27 @@ class PhotoManageView(APIView):
             return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
         member_id = request.user.id
 
-        image_file = request.FILES.get('url') # request의 url을 가져옴
+        # base64 인코딩된 이미지 데이터를 받음
+        base64_image = request.POST.get('url') # request의 url을 가져옴
         image_title = request.POST.get('title') # request의 title을 가져옴
 
-        if not image_file:
+        if not base64_image:
             return Response({"error": "No image provided"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 이미지 파일의 확장자 추출
-        extension = os.path.splitext(image_file.name)[1]
+        try:
+            image_data = base64.b64decode(base64_image)
+            image_file = io.BytesIO(image_data)
+            image = Image.open(image_file)
 
-        # 이미지를 데이터형식으로 전환
-        image_data = image_file.read()
+            # 이미지 형식에 따라 확장자 결정
+            if image.format == "JPEG":
+                extension = ".jpg"
+            elif image.format == "PNG":
+                extension = ".png"
+            else:
+                extension = ".jpg"  # 기본 확장자
+        except Exception as e:
+            return Response({"error": "Invalid image data: " + str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         # S3 업로드 및 Photo 객체 저장 비동기 처리
         save_photo_model.delay(image_data, image_title, extension, member_id)
