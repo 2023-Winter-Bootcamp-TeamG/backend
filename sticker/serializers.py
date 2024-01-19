@@ -12,7 +12,4 @@ class ImagePromptRequestSerializer(serializers.Serializer):
     prompt = serializers.CharField(required=True, help_text="Text prompt for the image generation.")
 
 class ImageGenerationResponseSerializer(serializers.Serializer):
-    aisticker_urls = serializers.ListField(
-        child=serializers.URLField(),
-        help_text="List of generated image URLs."
-    )
+    img_str = serializers.CharField(help_text="Base64 encoded image data.")
