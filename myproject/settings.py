@@ -171,4 +171,6 @@ AUTH_USER_MODEL = 'member.Member'
 # Celery 메세지 브로커 설정
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
 
+CSRF_TRUSTED_ORIGINS = ['http://localhost:5173']
+
 
