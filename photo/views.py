@@ -32,8 +32,8 @@ class PhotoManageView(APIView):
         member_id = request.user.id
 
         # base64 인코딩된 이미지 데이터를 받음
-        base64_image_with_prefix = request.POST.get('url') # request의 url을 가져옴
-        image_title = request.POST.get('title') # request의 title을 가져옴
+        base64_image_with_prefix = request.data.get('url') # request의 url을 가져옴
+        image_title = request.data.get('title') # request의 title을 가져옴
 
         if not base64_image_with_prefix:
             return Response({"error": "No image provided"}, status=status.HTTP_400_BAD_REQUEST)
