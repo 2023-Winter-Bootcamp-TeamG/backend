@@ -7,3 +7,9 @@ class StickerSerializer(serializers.ModelSerializer):
         fields = ['id', 'member_id', 'image', 'created_at', 'updated_at', 'deleted_at']
         read_only_fields = ['id', 'member_id', 'created_at', 'updated_at', 'deleted_at']
 
+
+class ImagePromptRequestSerializer(serializers.Serializer):
+    prompt = serializers.CharField(required=True, help_text="Text prompt for the image generation.")
+
+class ImageGenerationResponseSerializer(serializers.Serializer):
+    img_str = serializers.CharField(help_text="Base64 encoded image data.")
