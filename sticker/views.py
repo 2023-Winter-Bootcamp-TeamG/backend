@@ -1,20 +1,25 @@
 import boto3
+import openai
 from drf_yasg.utils import swagger_auto_schema
+from openai import OpenAI
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.files.base import ContentFile
 from .models import Sticker
-from .serializers import StickerSerializer
+from .serializers import StickerSerializer, ImagePromptRequestSerializer, ImageGenerationResponseSerializer
 from rembg import remove
 import uuid
 import os
 from rest_framework.parsers import MultiPartParser, FormParser
 from drf_yasg import openapi
-from myproject import settings
+from myproject.settings import AI_STICKER_KEY
 from .tasks import save_sticker_model, delete_from_s3
 from django.core.paginator import Paginator, EmptyPage
-
+import requests
+from PIL import Image
+from io import BytesIO
+import base64
 
 class StickerManageView(APIView):
     parser_classes = [MultiPartParser, FormParser]  # 파일과 폼 데이터 처리
@@ -128,3 +133,45 @@ class StickerDeleteView(APIView):
         sticker.delete()
 
         return Response({"message": "Delete processing started"}, status=status.HTTP_202_ACCEPTED)
+
+# AI 스티커
+class AiStickerView(APIView):
+    # AI 스티커 생성
+    @swagger_auto_schema(
+        request_body=ImagePromptRequestSerializer,
+        responses={
+            200: ImageGenerationResponseSerializer,
+            400: 'Invalid input',
+            500: 'Internal server error'
+        }
+    )
+    def post(self, request, *args, **kwargs):
+        client = OpenAI(api_key=AI_STICKER_KEY)
+        prompt = request.data.get('prompt')
+        if not prompt:
+            return Response({'error': 'No prompt provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # 이미지 생성
+            url_response = client.images.generate(
+                model="dall-e-3",
+                prompt=prompt+" 스티커",   # 만들 스티커 단어 입력
+                n=1,
+                size="1024x1024"
+            )
+
+            # 생성된 이미지의 URL 추출
+            aisticker_url = url_response.data[0].url    # 이미지 url 출력
+            image_response = requests.get(aisticker_url)
+            if image_response.status_code == 200:
+                dalleimage = Image.open(BytesIO(image_response.content))
+            else:
+                return Response({'error': 'URL not switched into image'})
+
+            buffered = BytesIO()    # 이미지를 메모리에 임시로 저장하기 위한 스트림 생성
+            dalleimage.save(buffered, format="JPEG")    # dalleimage를 BytesIO 스트림에 저장
+            img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')     # 인코딩
+
+            return Response({'img_str': img_str})
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
