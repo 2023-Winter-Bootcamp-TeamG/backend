@@ -15,6 +15,10 @@ from .tasks import save_photo_model, delete_from_s3, update_photo
 from django.core.paginator import Paginator, EmptyPage
 from PIL import Image
 import re
+import qrcode
+from io import BytesIO
+import base64
+from .serializers import QrSerializer
 
 # Create your views here.
 # 앨범 관련 뷰
@@ -208,3 +212,34 @@ class PhotoUpdateView(APIView):
 
         except Photo.DoesNotExist:
             return Response({"Error":"photo not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class QRAPIView(APIView):
+    def get(self, request, *args, **kwargs):
+        photo_id = kwargs.get("id")
+
+        try:
+            photo = Photo.objects.get(id=photo_id)
+
+            if photo.member_id != request.user:
+                return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        except Photo.DoesNotExist:
+            return Response({'error': 'Photo not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = QrSerializer(photo)
+        serialized_data = serializer.data
+        img = qrcode.make(serialized_data['url'])
+        image_io = BytesIO()
+        img.save(image_io, format='PNG')
+        image_io.seek(0)
+
+        # Encode the image as base64
+        image_base64 = base64.b64encode(image_io.getvalue()).decode('utf-8')
+
+        # Include the base64-encoded image in the JSON response
+        response_data = {'qr_code': image_base64}
+
+        return Response(response_data, status=status.HTTP_200_OK)
+        # return Response({'Message': 'Success'}, status=status.HTTP_200_OK)
+
