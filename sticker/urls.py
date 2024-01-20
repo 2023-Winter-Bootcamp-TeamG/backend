@@ -8,7 +8,7 @@ urlpatterns = [
     path('api/v1/stickers/', StickerManageView.as_view(), name='manage sticker'),
     # 스티커 삭제 경로
     path('api/v1/stickers/<int:id>/', StickerDeleteView.as_view(), name='sticker-delete'),
-    path('api/v1/stickers/delete/<int:id>/', StickerDeleteView.as_view(), name='sticker-delete'),
+    path('api/v1/stickers/<int:id>/', StickerDeleteView.as_view(), name='sticker-delete'),
     # AI 스티커
     path('api/v1/stickers/ai/', AiStickerView.as_view(), name='ai sticker')
 ]
