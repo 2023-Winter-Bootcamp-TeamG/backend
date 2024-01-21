@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'member',
     'photo',
     'sticker',
-    'qr',
     'drf_yasg', #drf_yasg
     'rest_framework', #djangorestframework
     'frame',

@@ -15,6 +15,10 @@ from .tasks import save_photo_model, delete_from_s3, update_photo
 from django.core.paginator import Paginator, EmptyPage
 from PIL import Image
 import re
+import qrcode
+from io import BytesIO
+import base64
+from .serializers import QrSerializer
 
 # Create your views here.
 # 앨범 관련 뷰
@@ -107,7 +111,8 @@ class PhotoManageView(APIView):
         # 직렬화된 데이터를 응답으로 반환
         return Response(serializer.data)
 
-class PhotoDeleteView(APIView):
+class PhotoEditView(APIView):
+    parser_classes = [MultiPartParser, FormParser]
     @swagger_auto_schema(
         operation_description="Delete a photo by ID",
         manual_parameters=[
@@ -143,8 +148,6 @@ class PhotoDeleteView(APIView):
 
         return Response({"message": "Delete processing started"}, status=status.HTTP_202_ACCEPTED)
 
-
-class PhotoDetailView(APIView):
     def get(self, request, *args, **kwargs):
         photo_id = kwargs.get('id', None) # url의 id를 가져옴
 
@@ -164,9 +167,6 @@ class PhotoDetailView(APIView):
         # 직렬화된 데이터를 응답으로 반환
         return Response(serializer.data)
 
-class PhotoUpdateView(APIView):
-    parser_classes = [MultiPartParser, FormParser]
-    # 사진 수정
     @swagger_auto_schema(
         operation_description="Update a photo",
         manual_parameters=[
@@ -181,18 +181,18 @@ class PhotoUpdateView(APIView):
         responses={200: "Success"}
     )
     def patch(self, request, *args, **kwargs):
-        image_file=request.FILES.get('url')
+        image_file = request.FILES.get('url')
         if not image_file:
-            return Response({"Error":"photo is not exist"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"Error": "photo is not exist"}, status=status.HTTP_400_BAD_REQUEST)
 
-        photo_id=kwargs.get("id")
+        photo_id = kwargs.get("id")
         if not photo_id:
-            return Response({"Error":"photo id is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"Error": "photo id is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            photo=Photo.objects.get(id=photo_id)
+            photo = Photo.objects.get(id=photo_id)
 
-            if photo.member_id != request.user: # 요청을 보낸 사용자가 사진의 주인이 아니면 에러 반환
+            if photo.member_id != request.user:  # 요청을 보낸 사용자가 사진의 주인이 아니면 에러 반환
                 return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
             # 기본 photo 객체의 이미지 파일명 사용
@@ -207,4 +207,34 @@ class PhotoUpdateView(APIView):
 
 
         except Photo.DoesNotExist:
-            return Response({"Error":"photo not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"Error": "photo not found"}, status=status.HTTP_404_NOT_FOUND)
+
+class QRAPIView(APIView):
+    def get(self, request, *args, **kwargs):
+        photo_id = kwargs.get("id")
+
+        try:
+            photo = Photo.objects.get(id=photo_id)
+
+            if photo.member_id != request.user:
+                return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        except Photo.DoesNotExist:
+            return Response({'error': 'Photo not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = QrSerializer(photo)
+        serialized_data = serializer.data
+        img = qrcode.make(serialized_data['url'])
+        image_io = BytesIO()
+        img.save(image_io, format='PNG')
+        image_io.seek(0)
+
+        # Encode the image as base64
+        image_base64 = base64.b64encode(image_io.getvalue()).decode('utf-8')
+
+        # Include the base64-encoded image in the JSON response
+        response_data = {'qr_code': image_base64}
+
+        return Response(response_data, status=status.HTTP_200_OK)
+        # return Response({'Message': 'Success'}, status=status.HTTP_200_OK)
+

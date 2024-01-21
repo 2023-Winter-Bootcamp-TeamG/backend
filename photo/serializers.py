@@ -23,3 +23,9 @@ class PhotoUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Photo
         fields = ['url']
+
+# qr serializer
+class QrSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Photo
+        fields = ['id', 'url']
