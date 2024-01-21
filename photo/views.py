@@ -23,7 +23,6 @@ from .serializers import QrSerializer
 # Create your views here.
 # 앨범 관련 뷰
 class PhotoManageView(APIView):
-    parser_classes = [MultiPartParser, FormParser]
     @swagger_auto_schema(
         operation_description="upload a new photo",
         request_body=PhotoSerializer,
@@ -112,6 +111,8 @@ class PhotoManageView(APIView):
         # 직렬화된 데이터를 응답으로 반환
         return Response(serializer.data)
 
+class PhotoEditView(APIView):
+    parser_classes = [MultiPartParser, FormParser]
     @swagger_auto_schema(
         operation_description="Delete a photo by ID",
         manual_parameters=[
