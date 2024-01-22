@@ -1,6 +1,8 @@
 from django.db import models
 from member.models import Member
-class Photo(models.Model):
+from django_prometheus.models import ExportModelOperationsMixin
+
+class Photo(ExportModelOperationsMixin('photo'), models.Model):
     member_id = models.ForeignKey(Member, on_delete=models.CASCADE, null=True)
     title = models.CharField(max_length = 20, null = False)
     url = models.ImageField(upload_to='photos/')

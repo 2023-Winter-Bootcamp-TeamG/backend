@@ -1,6 +1,8 @@
 from django.db import models
 from member.models import Member
-class Sticker(models.Model):
+from django_prometheus.models import ExportModelOperationsMixin
+
+class Sticker(ExportModelOperationsMixin('sticker'), models.Model):
     # Member 모델의 PK를 참조하는 외래키
     member_id = models.ForeignKey(Member, on_delete=models.CASCADE, null=True)
 
