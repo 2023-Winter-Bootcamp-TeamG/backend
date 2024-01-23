@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django_prometheus.models import ExportModelOperationsMixin
 
 class MemberManager(BaseUserManager):
     # 사용자 생성 메소드
@@ -23,7 +24,7 @@ class MemberManager(BaseUserManager):
 
         return self.create_user(nickname, email, password, **extra_fields)
 
-class Member(AbstractUser):
+class Member(ExportModelOperationsMixin('member'), AbstractUser):
     email = models.EmailField(unique=True) # 이메일 필드 유니크하게
     nickname = models.CharField(max_length=20, null=False)
     deleted_at = models.DateTimeField(null=True, blank=True)

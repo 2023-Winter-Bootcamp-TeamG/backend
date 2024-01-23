@@ -24,7 +24,8 @@ urlpatterns = [
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('', include('photo.urls')),
     path('', include('sticker.urls')),
-    path('', include('frame.urls'))
+    path('', include('frame.urls')),
+    path('', include('django_prometheus.urls')),
 ]
 
 
