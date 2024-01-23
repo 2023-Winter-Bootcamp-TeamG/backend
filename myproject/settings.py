@@ -28,7 +28,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['www.doodlefilm.store', 'localhost', '*']
 
-
 # Application definition
 
 INSTALLED_APPS = [

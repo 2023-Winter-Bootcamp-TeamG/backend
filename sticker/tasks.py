@@ -6,6 +6,8 @@ from .models import Sticker
 from member.models import Member
 from myproject import settings
 from rembg import remove
+from io import BytesIO
+import base64
 
 @shared_task
 def save_sticker_model(input_image, extension, member_id):
@@ -28,3 +30,10 @@ def delete_from_s3(image_url):
     s3 = boto3.client('s3')
     bucket_name = settings.AWS_STORAGE_BUCKET_NAME
     s3.delete_object(Bucket=bucket_name, Key=image_url)
+
+@shared_task
+def aisticker_url_encoding(dalleimage):
+    buffered = BytesIO()  # 이미지를 메모리에 임시로 저장하기 위한 스트림 생성
+    dalleimage.save(buffered, format="JPEG")  # dalleimage를 BytesIO 스트림에 저장
+    img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')  # 인코딩
+    return img_str

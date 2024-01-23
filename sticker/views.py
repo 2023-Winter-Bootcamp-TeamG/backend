@@ -14,7 +14,7 @@ import os
 from rest_framework.parsers import MultiPartParser, FormParser
 from drf_yasg import openapi
 from myproject.settings import AI_STICKER_KEY
-from .tasks import save_sticker_model, delete_from_s3
+from .tasks import save_sticker_model, delete_from_s3, aisticker_url_encoding
 from django.core.paginator import Paginator, EmptyPage
 import requests
 from PIL import Image
@@ -168,9 +168,8 @@ class AiStickerView(APIView):
             else:
                 return Response({'error': 'URL not switched into image'})
 
-            buffered = BytesIO()    # 이미지를 메모리에 임시로 저장하기 위한 스트림 생성
-            dalleimage.save(buffered, format="JPEG")    # dalleimage를 BytesIO 스트림에 저장
-            img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')     # 인코딩
+            # AI 스티커 url 인코딩
+            img_str = aisticker_url_encoding.delay(dalleimage)
 
             return Response({'img_str': img_str})
         except Exception as e:
