@@ -19,6 +19,7 @@ import qrcode
 from io import BytesIO
 import base64
 from .serializers import QrSerializer
+from .serializers import CustomedPhotoSerializer
 
 # Create your views here.
 # 앨범 관련 뷰
@@ -238,3 +239,22 @@ class QRAPIView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
         # return Response({'Message': 'Success'}, status=status.HTTP_200_OK)
 
+class PhotoTestView(APIView):
+    @swagger_auto_schema(
+        operation_summary="Upload a New Photo",
+        operation_description="Upload a new photo with stickers and textboxes.",
+        request_body=CustomedPhotoSerializer,
+        responses={
+            201: CustomedPhotoSerializer(many=False),
+            400: 'Bad Request',
+            401: 'Unauthorized'
+        }
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = CustomedPhotoSerializer(data=request.data)
+        if serializer.is_valid():
+            # 현재 사용자 ID 설정
+            serializer.validated_data['user_id'] = request.user.id
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
