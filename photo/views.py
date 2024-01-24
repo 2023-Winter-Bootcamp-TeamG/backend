@@ -1,6 +1,6 @@
 import base64
 import io
-from .models import Photo
+from .models import Photo, TextBox, UsedSticker, CustomedPhoto
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -25,9 +25,27 @@ from .serializers import CustomedPhotoSerializer
 # 앨범 관련 뷰
 class PhotoManageView(APIView):
     @swagger_auto_schema(
-        operation_description="upload a new photo",
-        request_body=PhotoSerializer,
-        response={202: "Save processing started"}
+        operation_summary="Upload Photo and Customed Data",
+        operation_description="Upload original and customed photos with stickers and textboxes data.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'photo_data': openapi.Schema(type=openapi.TYPE_STRING, description='Base64 encoded photo data'),
+                'result_photo_data': openapi.Schema(type=openapi.TYPE_STRING,
+                                                    description='Base64 encoded customed photo data'),
+                'stickers': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_OBJECT, ref='#/definitions/UsedSticker'),
+                    description='List of stickers'
+                ),
+                'textboxes': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_OBJECT, ref='#/definitions/TextBox'),
+                    description='List of textboxes'
+                )
+            }
+        ),
+        responses={202: openapi.Response('Processing started')}
     )
 
     # 사진을 앨범에 업로드
@@ -36,31 +54,61 @@ class PhotoManageView(APIView):
             return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
         member_id = request.user.id
 
-        # base64 인코딩된 이미지 데이터를 받음
-        base64_image_with_prefix = request.data.get('url') # request의 url을 가져옴
-        image_title = request.data.get('title') # request의 title을 가져옴
+        photo_data_with_prefix = request.data.get('photo_data')
+        result_photo_data_with_prefix = request.data.get('result_photo_data')
+        stickers_data = request.data.get('stickers', [])
+        textboxes_data = request.data.get('textboxes', [])
 
-        if not base64_image_with_prefix:
-            return Response({"error": "No image provided"}, status=status.HTTP_400_BAD_REQUEST)
+        photo_match = re.match(r'data:image/(?P<format>\w+);base64,(?P<data>.+)', photo_data_with_prefix)
+        result_photo_match = re.match(r'data:image/(?P<format>\w+);base64,(?P<data>.+)', result_photo_data_with_prefix)
 
-        match = re.match(r'data:image/(?P<format>\w+);base64,(?P<data>.+)', base64_image_with_prefix)
-        if not match:
+        if (not photo_match) or (not result_photo_match):
             return Response({"error": "Invalid image data format"}, status=status.HTTP_400_BAD_REQUEST)
 
-        image_format = match.group('format')
-        base64_image = match.group('data')
+        photo_format = photo_match.group('format')
+        base64_photo = photo_match.group('data')
 
-        extension = "." + image_format.lower() # 확장자 설정
+        result_photo_format = result_photo_match.group('format')
+        base64_result_photo = result_photo_match.group('data')
+
+        photo_extension = "." + photo_format.lower()
+        result_photo_extension = "." + result_photo_format.lower()
 
         try:
-            image_data = base64.b64decode(base64_image)
+            photo_data = base64.b64decode(base64_photo)
+            result_photo_data = base64.b64decode(base64_result_photo)
         except Exception as e:
             return Response({"error": "Invalid image data: " + str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        # S3 업로드 및 Photo 객체 저장 비동기 처리
-        save_photo_model.delay(image_data, image_title, extension, member_id)
+        save_photo_model.delay(member_id, photo_data, photo_extension, result_photo_data, result_photo_extension, stickers_data, textboxes_data)
 
         return Response({"message": "Save processing started"}, status=status.HTTP_202_ACCEPTED)
+
+    # # base64 인코딩된 이미지 데이터를 받음
+        # base64_image_with_prefix = request.data.get('url') # request의 url을 가져옴
+        # image_title = request.data.get('title') # request의 title을 가져옴
+        #
+        # if not base64_image_with_prefix:
+        #     return Response({"error": "No image provided"}, status=status.HTTP_400_BAD_REQUEST)
+        #
+        # match = re.match(r'data:image/(?P<format>\w+);base64,(?P<data>.+)', base64_image_with_prefix)
+        # if not match:
+        #     return Response({"error": "Invalid image data format"}, status=status.HTTP_400_BAD_REQUEST)
+        #
+        # image_format = match.group('format')
+        # base64_image = match.group('data')
+        #
+        # extension = "." + image_format.lower() # 확장자 설정
+        #
+        # try:
+        #     image_data = base64.b64decode(base64_image)
+        # except Exception as e:
+        #     return Response({"error": "Invalid image data: " + str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        #
+        # # S3 업로드 및 Photo 객체 저장 비동기 처리
+        # save_photo_model.delay(image_data, image_title, extension, member_id)
+        #
+        # return Response({"message": "Save processing started"}, status=status.HTTP_202_ACCEPTED)
 
     # 앨범에 저장된 전체 사진 보기
     @swagger_auto_schema(

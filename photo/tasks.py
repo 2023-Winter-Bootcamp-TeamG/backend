@@ -5,18 +5,48 @@ import uuid
 from .models import Photo
 from member.models import Member
 from myproject import settings
+from .serializers import CustomedPhotoSerializer
 
 @shared_task
-def save_photo_model(image_data, image_title, extension, member_id):
-    # 고유한 파일명 생성(S3는 같은 이름의 파일을 업로드할 시 덮어쓰기 때문)
-    image_name = f"{uuid.uuid4()}{extension}"
+def save_photo_model(member_id, photo_data, photo_extension, result_photo_data, result_photo_extension, stickers_data, textboxes_data):
+    photo_name = f"{uuid.uuid4()}{photo_extension}"
+    result_photo_name = f"{uuid.uuid4()}{result_photo_extension}"
 
     member = Member.objects.get(id=member_id)
 
-    result_image_file = ContentFile(image_data, name=image_name)
-
-    photo = Photo(member_id=member, url=result_image_file, title=image_title)
+    photo_file = ContentFile(photo_data, name=photo_name)
+    photo = Photo(member_id=member, url=photo_file, is_customed=False)
     photo.save()
+
+    result_photo_file = ContentFile(result_photo_data, name=result_photo_name)
+    result_photo = Photo(member_id=member, url=result_photo_file, is_customed=True)
+    result_photo.save()
+
+    customed_photo_data = {
+        'photo_url': photo.url.url,
+        'result_photo_url': result_photo.url.url,
+        'stickers': stickers_data,
+        'textboxes': textboxes_data
+    }
+
+    serializer = CustomedPhotoSerializer(data=customed_photo_data)
+    if serializer.is_valid():
+        serializer.validated_data['user_id'] = member_id
+        serializer.validated_data['photo_id'] = photo.id
+        serializer.save()
+    else:
+        raise ValueError("Invalid customed photo data")
+
+# def save_photo_model(image_data, image_title, extension, member_id):
+#     # 고유한 파일명 생성(S3는 같은 이름의 파일을 업로드할 시 덮어쓰기 때문)
+#     image_name = f"{uuid.uuid4()}{extension}"
+#
+#     member = Member.objects.get(id=member_id)
+#
+#     result_image_file = ContentFile(image_data, name=image_name)
+#
+#     photo = Photo(member_id=member, url=result_image_file, title=image_title)
+#     photo.save()
 
 @shared_task
 def delete_from_s3(image_url):
