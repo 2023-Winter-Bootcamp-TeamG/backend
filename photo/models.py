@@ -5,7 +5,7 @@ from djongo import models as djongo_models
 
 class Photo(ExportModelOperationsMixin('photo'), models.Model):
     member_id = models.ForeignKey(Member, on_delete=models.CASCADE, null=True)
-    title = models.CharField(max_length = 20, null = False)
+    is_customed = models.BooleanField(default=False)
     url = models.ImageField(upload_to='photos/')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -24,6 +24,7 @@ class UsedSticker(djongo_models.Model):
     # 추상 모델 지정
     class Meta:
         abstract = True
+        managed = False
 
 # 커스텀에 사용된 텍스트박스
 class TextBox(djongo_models.Model):
@@ -37,13 +38,18 @@ class TextBox(djongo_models.Model):
     #추상 모델 지정
     class Meta:
         abstract = True
+        managed = False
 
 # 커스텀 된 사진
 class CustomedPhoto(djongo_models.Model):
     user_id = djongo_models.IntegerField()
+    photo_id = djongo_models.IntegerField()
     photo_url = djongo_models.URLField()
     stickers = djongo_models.ArrayField(model_container=UsedSticker)
     textboxes = djongo_models.ArrayField(model_container=TextBox)
+
+    class Meta:
+        managed = False
 
     def __str__(self):
         return self.photo_url
