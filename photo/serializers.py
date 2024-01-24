@@ -54,8 +54,13 @@ class CustomedPhotoSerializer(serializers.ModelSerializer):
         fields = ['photo_url', 'stickers', 'textboxes']
 
     def create(self, validated_data):
-        stickers_data = validated_data.pop('stickers')
-        textboxes_data = validated_data.pop('textboxes')
-        customed_photo = CustomedPhoto(**validated_data)
-        customed_photo.save(using='mongodb')  # MongoDB를 명시적으로 사용
+        stickers_data = validated_data.pop('stickers', [])
+        textboxes_data = validated_data.pop('textboxes', [])
+        customed_photo = CustomedPhoto.objects.create(**validated_data, using='mongodb')
+
+        # stickers와 textboxes 필드에 데이터 할당
+        customed_photo.stickers = stickers_data
+        customed_photo.textboxes = textboxes_data
+        customed_photo.save(using='mongodb')
+
         return customed_photo
