@@ -58,7 +58,7 @@ class CustomedPhotoSerializer(serializers.ModelSerializer):
         textboxes_data = validated_data.pop('textboxes', [])
 
         # CustomedPhoto 인스턴스 생성
-        customed_photo = CustomedPhoto.objects.create(**validated_data)
+        customed_photo = CustomedPhoto(**validated_data)
 
         # stickers와 textboxes 필드에 직렬화된 데이터 할당
         customed_photo.stickers = stickers_data
