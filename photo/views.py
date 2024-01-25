@@ -202,7 +202,7 @@ class PhotoEditView(APIView):
 
         try:
             # Photo 객체를 id와 member_id를 기준으로 찾음
-            photo = Photo.objects.get(id=photo_id)
+            photo = Photo.objects.get(id=photo_id, is_customed=True)
 
             if photo.member_id != request.user: # 요청을 보낸 사용자가 사진의 주인이 아니면 에러 반환
                 return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -217,17 +217,26 @@ class PhotoEditView(APIView):
         return Response(serializer.data)
 
     @swagger_auto_schema(
-        operation_description="Update a photo",
-        manual_parameters=[
-            openapi.Parameter(
-                'id', openapi.IN_PATH,
-                description="id of photo",
-                type=openapi.TYPE_INTEGER,
-                required=True,
-            ),
-        ],
-        request_body=PhotoUpdateSerializer,
-        responses={200: "Success"}
+        operation_summary="Edit a customed photo",
+        operation_description="Upload customed photos with stickers and textboxes data.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'result_photo_data': openapi.Schema(type=openapi.TYPE_STRING,
+                                                    description='Base64 encoded customed photo data'),
+                'stickers': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_OBJECT, ref='#/definitions/UsedSticker'),
+                    description='List of stickers'
+                ),
+                'textboxes': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_OBJECT, ref='#/definitions/TextBox'),
+                    description='List of textboxes'
+                )
+            }
+        ),
+        responses={202: openapi.Response('Processing started')}
     )
     def put(self, request, *args, **kwargs):
         photo_id = kwargs.get("id")
