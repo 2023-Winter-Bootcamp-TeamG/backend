@@ -2,7 +2,7 @@ import boto3
 from celery import shared_task
 from django.core.files.base import ContentFile
 import uuid
-from .models import Photo
+from .models import Photo, CustomedPhoto
 from member.models import Member
 from myproject import settings
 from .serializers import CustomedPhotoSerializer
@@ -24,7 +24,6 @@ def save_photo_model(member_id, photo_data, photo_extension, result_photo_data, 
 
     customed_photo_data = {
         'photo_url': photo.url.url,
-        'result_photo_url': result_photo.url.url,
         'stickers': stickers_data,
         'textboxes': textboxes_data
     }
@@ -56,11 +55,24 @@ def delete_from_s3(image_url):
     s3.delete_object(Bucket=bucket_name, Key=image_url)
 
 @shared_task
-def update_photo(photo_id, image_data, original_file_name):
+def update_photo(photo_id, result_photo_data, original_file_name, stickers_data, textboxes_data):
     photo = Photo.objects.get(id=photo_id)
 
-    result_image_file = ContentFile(image_data, name=original_file_name)
+    result_image_file = ContentFile(result_photo_data, name=original_file_name)
 
     # 기존 Photo 객체의 url 필드 업데이트
     photo.url = result_image_file
     photo.save()
+
+    customed_photo = CustomedPhoto.objects.using('mongodb').get(photo_id=photo_id)
+
+    updated_photo_data = {
+        'stickers': stickers_data,
+        'textboxes': textboxes_data
+    }
+
+    serializer = CustomedPhotoSerializer(customed_photo, data=updated_photo_data, partial=True)
+    if serializer.is_valid():
+        serializer.save(using='mongodb')
+    else:
+        raise ValueError("Invalid customed photo data")

@@ -142,8 +142,8 @@ class PhotoManageView(APIView):
         except ValueError:
             return Response({"error": "Invalid page or size parameter"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 현재 클라이언트의 사진만 필터링
-        photos = Photo.objects.filter(member_id=request.user)
+        # 현재 클라이언트의 커스텀 된 사진만 필터링
+        photos = Photo.objects.filter(member_id=request.user, is_customed=True)
 
         # Paginator 객체 생성
         paginator = Paginator(photos, size)
@@ -229,12 +229,21 @@ class PhotoEditView(APIView):
         request_body=PhotoUpdateSerializer,
         responses={200: "Success"}
     )
-    def patch(self, request, *args, **kwargs):
-        image_file = request.FILES.get('url')
-        if not image_file:
-            return Response({"Error": "photo is not exist"}, status=status.HTTP_400_BAD_REQUEST)
-
+    def put(self, request, *args, **kwargs):
         photo_id = kwargs.get("id")
+
+        result_photo_data_with_prefix = request.data.get('result_photo_data')
+        stickers_data = request.data.get('stickers', [])
+        textboxes_data = request.data.get('textboxes', [])
+        result_photo_match = re.match(r'data:image/(?P<format>\w+);base64,(?P<data>.+)', result_photo_data_with_prefix)
+
+        if not result_photo_match:
+            return Response({"error": "Invalid image data format"}, status=status.HTTP_400_BAD_REQUEST)
+
+        base64_result_photo = result_photo_match.group('data')
+
+        result_photo_data = base64.b64decode(base64_result_photo)
+
         if not photo_id:
             return Response({"Error": "photo id is required"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -247,13 +256,10 @@ class PhotoEditView(APIView):
             # 기본 photo 객체의 이미지 파일명 사용
             original_file_name = os.path.basename(photo.url.name)
 
-            image_data = image_file.read()
-
             # photo 업데이트 비동기처리
-            update_photo.delay(photo_id, image_data, original_file_name)
+            update_photo.delay(photo_id, result_photo_data, original_file_name, stickers_data, textboxes_data)
 
             return Response({"message": "Update processing started"}, status=status.HTTP_202_ACCEPTED)
-
 
         except Photo.DoesNotExist:
             return Response({"Error": "photo not found"}, status=status.HTTP_404_NOT_FOUND)
