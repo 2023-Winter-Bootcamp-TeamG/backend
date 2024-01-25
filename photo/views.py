@@ -161,7 +161,6 @@ class PhotoManageView(APIView):
         return Response(serializer.data)
 
 class PhotoEditView(APIView):
-    parser_classes = [MultiPartParser, FormParser]
     @swagger_auto_schema(
         operation_description="Delete a photo by ID",
         manual_parameters=[
