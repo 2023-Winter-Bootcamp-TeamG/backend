@@ -30,6 +30,7 @@ class PhotoManageView(APIView):
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
+                'title' : openapi.Schema(type=openapi.TYPE_STRING, description='title of photo'),
                 'photo_data': openapi.Schema(type=openapi.TYPE_STRING, description='Base64 encoded photo data'),
                 'result_photo_data': openapi.Schema(type=openapi.TYPE_STRING,
                                                     description='Base64 encoded customed photo data'),
@@ -53,6 +54,8 @@ class PhotoManageView(APIView):
         if not request.user.id:
             return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
         member_id = request.user.id
+
+        result_photo_title = request.data.get('title')
 
         photo_data_with_prefix = request.data.get('photo_data')
         result_photo_data_with_prefix = request.data.get('result_photo_data')
@@ -80,7 +83,7 @@ class PhotoManageView(APIView):
         except Exception as e:
             return Response({"error": "Invalid image data: " + str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        save_photo_model.delay(member_id, photo_data, photo_extension, result_photo_data, result_photo_extension, stickers_data, textboxes_data)
+        save_photo_model.delay(member_id, photo_data, photo_extension, result_photo_data, result_photo_extension, stickers_data, textboxes_data, result_photo_title)
 
         return Response({"message": "Save processing started"}, status=status.HTTP_202_ACCEPTED)
 

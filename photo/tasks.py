@@ -8,7 +8,7 @@ from myproject import settings
 from .serializers import CustomedPhotoSerializer
 
 @shared_task
-def save_photo_model(member_id, photo_data, photo_extension, result_photo_data, result_photo_extension, stickers_data, textboxes_data):
+def save_photo_model(member_id, photo_data, photo_extension, result_photo_data, result_photo_extension, stickers_data, textboxes_data, result_photo_title):
     photo_name = f"{uuid.uuid4()}{photo_extension}"
     result_photo_name = f"{uuid.uuid4()}{result_photo_extension}"
 
@@ -19,7 +19,7 @@ def save_photo_model(member_id, photo_data, photo_extension, result_photo_data, 
     photo.save()
 
     result_photo_file = ContentFile(result_photo_data, name=result_photo_name)
-    result_photo = Photo(member_id=member, url=result_photo_file, is_customed=True)
+    result_photo = Photo(member_id=member, url=result_photo_file, is_customed=True, title=result_photo_title)
     result_photo.save()
 
     customed_photo_data = {
