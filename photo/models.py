@@ -24,7 +24,6 @@ class UsedSticker(djongo_models.Model):
 
     # 추상 모델 지정
     class Meta:
-        abstract = True
         managed = False
 
 # 커스텀에 사용된 텍스트박스
@@ -38,7 +37,6 @@ class TextBox(djongo_models.Model):
 
     #추상 모델 지정
     class Meta:
-        abstract = True
         managed = False
 
 # 커스텀 된 사진
