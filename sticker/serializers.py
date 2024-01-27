@@ -4,12 +4,12 @@ from .models import Sticker
 class StickerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sticker
-        fields = ['id', 'member_id', 'image', 'created_at', 'updated_at', 'deleted_at']
-        read_only_fields = ['id', 'member_id', 'created_at', 'updated_at', 'deleted_at']
+        fields = ['id', 'member_id', 'image', 'created_at', 'updated_at', 'deleted_at', 'is_ai']
+        read_only_fields = ['id', 'member_id', 'created_at', 'updated_at', 'deleted_at', 'is_ai']
 
 
-class ImagePromptRequestSerializer(serializers.Serializer):
-    prompt = serializers.CharField(required=True, help_text="Text prompt for the image generation.")
+class AiStickerKeywordRequestSerializer(serializers.Serializer):
+    keyword = serializers.CharField(required=True, help_text="Text keyword for the image generation.")
 
-class ImageGenerationResponseSerializer(serializers.Serializer):
+class AiStickerGenerationResponseSerializer(serializers.Serializer):
     img_str = serializers.CharField(help_text="Base64 encoded image data.")
