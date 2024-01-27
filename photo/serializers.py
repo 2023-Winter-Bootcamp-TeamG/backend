@@ -67,3 +67,11 @@ class CustomedPhotoSerializer(serializers.ModelSerializer):
         customed_photo.save(using='mongodb')
         return customed_photo
 
+    def update(self, instance, validated_data):
+        # 기존 인스턴스 업데이트 로직
+        instance.photo_url = validated_data.get('photo_url', instance.photo_url)
+        instance.stickers = validated_data.get('stickers', instance.stickers)
+        instance.textboxes = validated_data.get('textboxes', instance.textboxes)
+        instance.save(using='mongodb')
+        return instance
+
