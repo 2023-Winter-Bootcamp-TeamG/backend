@@ -74,6 +74,7 @@ def update_photo(photo_id, result_photo_data, original_file_name, stickers_data,
 
     serializer = CustomedPhotoSerializer(customed_photo, data=updated_photo_data, partial=True)
     if serializer.is_valid():
+        customed_photo.delete()
         serializer.save(using='mongodb')
     else:
         raise ValueError("Invalid customed photo data")
