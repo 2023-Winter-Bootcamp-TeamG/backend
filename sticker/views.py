@@ -15,7 +15,7 @@ import os
 from rest_framework.parsers import MultiPartParser, FormParser
 from drf_yasg import openapi
 from myproject.settings import AI_STICKER_KEY
-from .tasks import save_sticker_model, delete_from_s3, aisticker_create
+from .tasks import save_sticker_model, delete_from_s3, aisticker_create, save_aisticker_model
 from django.core.paginator import Paginator, EmptyPage
 import requests
 from PIL import Image
@@ -222,32 +222,17 @@ class AiStickerSaveView(APIView):
         result = AsyncResult(task_id)
 
         if not result.ready():
-            return Response({'error': 'Task is not completed yet'}, status=400)
+            return Response({'error': 'Task is not completed yet'}, status=status.HTTP_400_BAD_REQUEST)
 
-        member_id = request.user.id
+        if result.failed():
+            return Response({'error': 'Task failed'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # Base64 인코딩된 이미지 데이터
         img_str = result.result
 
-        # 인코딩된 이미지 데이터 검사
-        match = re.match(r'data:image/(?P<format>\w+);base64,(?P<data>.+)', img_str)
-        if not match:
-            return Response({"error": "Invalid image data format"}, status=status.HTTP_400_BAD_REQUEST)
+        member_id = request.user.id
 
-        # 이미지 형식 추출
-        image_format = match.group('format')
-        # 인코딩된 이미지 데이터
-        base64_image = match.group('data')
-
-        # 확장자 설정
-        extension = "." + image_format.lower()
-
-        try:
-            input_image = base64.b64decode(base64_image)
-        except Exception as e:
-            return Response({"error": "Invalid image data: " + str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        save_sticker_model.delay(input_image, extension, member_id, is_ai=True)
+        save_aisticker_model.delay(img_str, member_id, is_ai=True)
 
         return Response({"message": "Save processing started"}, status=status.HTTP_202_ACCEPTED)
 
