@@ -19,7 +19,7 @@ def save_photo_model(member_id, photo_data, photo_extension, result_photo_data, 
     photo.save()
 
     result_photo_file = ContentFile(result_photo_data, name=result_photo_name)
-    result_photo = Photo(member_id=member, url=result_photo_file, is_customed=True, title=result_photo_title)
+    result_photo = Photo(member_id=member, url=result_photo_file, is_customed=True, title=result_photo_title, origin=photo)
     result_photo.save()
 
     customed_photo_data = {
@@ -66,7 +66,14 @@ def update_photo(photo_id, result_photo_data, original_file_name, stickers_data,
 
     customed_photo = CustomedPhoto.objects.using('mongodb').get(photo_id=photo_id)
 
-    customed_photo.stickers = stickers_data
-    customed_photo.textboxes= textboxes_data
+    updated_photo_data = {
+        'photo_url': customed_photo.photo_url,
+        'stickers': stickers_data,
+        'textboxes': textboxes_data
+    }
 
-    customed_photo.save(using='mongodb')
+    serializer = CustomedPhotoSerializer(customed_photo, data=updated_photo_data, partial=True)
+    if serializer.is_valid():
+        serializer.save(using='mongodb')
+    else:
+        raise ValueError("Invalid customed photo data")

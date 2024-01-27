@@ -204,16 +204,16 @@ class PhotoEditView(APIView):
 
         try:
             # Photo 객체를 id와 member_id를 기준으로 찾음
-            photo = Photo.objects.get(id=photo_id, is_customed=True)
+            customed_photo = CustomedPhoto.objects.using('mongodb').get(photo_id=photo_id)
 
-            if photo.member_id != request.user: # 요청을 보낸 사용자가 사진의 주인이 아니면 에러 반환
+            if customed_photo.user_id != request.user.id: # 요청을 보낸 사용자가 사진의 주인이 아니면 에러 반환
                 return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
-        except Photo.DoesNotExist:
+        except CustomedPhoto.DoesNotExist:
             # 해당 조건을 만족하는 Photo 객체가 없으면 404 에러 반환
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         # Photo 객체를 직렬화
-        serializer = PhotoDetailSerializer(photo)
+        serializer = CustomedPhotoSerializer(customed_photo)
 
         # 직렬화된 데이터를 응답으로 반환
         return Response(serializer.data)

@@ -5,6 +5,7 @@ from djongo import models as djongo_models
 
 class Photo(ExportModelOperationsMixin('photo'), models.Model):
     member_id = models.ForeignKey(Member, on_delete=models.CASCADE, null=True)
+    origin = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='derived_photos')
     is_customed = models.BooleanField(default=False)
     title = models.CharField(max_length=20)
     url = models.ImageField(upload_to='photos/')
@@ -41,6 +42,7 @@ class TextBox(djongo_models.Model):
 
 # 커스텀 된 사진
 class CustomedPhoto(djongo_models.Model):
+    id = djongo_models.AutoField(primary_key=True)
     user_id = djongo_models.IntegerField()
     photo_id = djongo_models.IntegerField()
     photo_url = djongo_models.URLField()

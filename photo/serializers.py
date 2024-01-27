@@ -11,7 +11,7 @@ class PhotoSerializer(serializers.ModelSerializer):
 class PhotoLoadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Photo
-        fields = ['id', 'title', 'url']
+        fields = ['origin', 'title', 'url']
 
 #사진 상세보기
 class PhotoDetailSerializer(serializers.ModelSerializer):
