@@ -66,14 +66,7 @@ def update_photo(photo_id, result_photo_data, original_file_name, stickers_data,
 
     customed_photo = CustomedPhoto.objects.using('mongodb').get(photo_id=photo_id)
 
-    updated_photo_data = {
-        'photo_url': customed_photo.photo_url,
-        'stickers': stickers_data,
-        'textboxes': textboxes_data
-    }
+    customed_photo.stickers = stickers_data
+    customed_photo.textboxes= textboxes_data
 
-    serializer = CustomedPhotoSerializer(customed_photo, data=updated_photo_data, partial=True)
-    if serializer.is_valid():
-        serializer.save(using='mongodb')
-    else:
-        raise ValueError("Invalid customed photo data")
+    customed_photo.save(using='mongodb')

@@ -54,7 +54,6 @@ class CustomedPhotoSerializer(serializers.ModelSerializer):
         fields = ['photo_url', 'stickers', 'textboxes']
 
     def create(self, validated_data):
-        print("만들기만들기만들기만들기만들기만들기만들기만들기")
         stickers_data = validated_data.pop('stickers', [])
         textboxes_data = validated_data.pop('textboxes', [])
 
@@ -69,7 +68,6 @@ class CustomedPhotoSerializer(serializers.ModelSerializer):
         return customed_photo
 
     def update(self, instance, validated_data):
-        print("업데이트업데이터업데이트업데이트업데이트")
         # 기존 인스턴스 업데이트 로직
         instance.photo_url = validated_data.get('photo_url', instance.photo_url)
         instance.stickers = validated_data.get('stickers', instance.stickers)
