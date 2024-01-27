@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('member', '__fist__'),  # Member 앱의 초기 마이그레이션에 대한 의존성
+        ('member', '__fist__'),
     ]
 
     operations = [
@@ -19,7 +19,6 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('deleted_at', models.DateTimeField(null=True, blank=True)),
-                ('is_ai', models.BooleanField(default=False)),
                 ('member_id', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='member.Member')),
             ],
         ),
