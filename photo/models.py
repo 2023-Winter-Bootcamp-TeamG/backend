@@ -42,7 +42,6 @@ class TextBox(djongo_models.Model):
 
 # 커스텀 된 사진
 class CustomedPhoto(djongo_models.Model):
-    id = djongo_models.AutoField(primary_key=True)
     user_id = djongo_models.IntegerField()
     photo_id = djongo_models.IntegerField()
     photo_url = djongo_models.URLField()

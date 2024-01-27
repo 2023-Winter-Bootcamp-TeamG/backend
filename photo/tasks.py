@@ -48,11 +48,14 @@ def save_photo_model(member_id, photo_data, photo_extension, result_photo_data, 
 #     photo.save()
 
 @shared_task
-def delete_from_s3(image_url):
+def delete_from_s3(photo_id, image_url, result_image_url):
     s3 = boto3.client('s3')
     bucket_name = settings.AWS_STORAGE_BUCKET_NAME
-
+    CustomedPhoto.objects.using('mongodb').filter(photo_id=photo_id).delete()
     s3.delete_object(Bucket=bucket_name, Key=image_url)
+    s3.delete_object(Bucket=bucket_name, Key=result_image_url)
+
+    
 
 @shared_task
 def update_photo(photo_id, result_photo_data, original_file_name, stickers_data, textboxes_data):
@@ -74,7 +77,7 @@ def update_photo(photo_id, result_photo_data, original_file_name, stickers_data,
 
     serializer = CustomedPhotoSerializer(customed_photo, data=updated_photo_data, partial=True)
     if serializer.is_valid():
-        customed_photo.delete()
+        CustomedPhoto.objects.using('mongodb').filter(photo_id=photo_id).delete()
         serializer.save(using='mongodb')
     else:
         raise ValueError("Invalid customed photo data")

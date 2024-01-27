@@ -183,6 +183,7 @@ class PhotoEditView(APIView):
             return Response({"error": "Photo ID is required"}, status=status.HTTP_400_BAD_REQUEST)
         try:
             photo = Photo.objects.get(id=photo_id)
+            result_photo = Photo.objects.get(origin=photo)
             # 현재 클라이언트가 사진의 주인이 아니라면 error 반환
             if photo.member_id != request.user:
                 return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -190,9 +191,10 @@ class PhotoEditView(APIView):
             return Response({"error": "Photo not found"}, status=status.HTTP_404_NOT_FOUND)
 
         image_url = photo.url.name  # 이미지 파일의 S3 경로
+        result_image_url = result_photo.url.name
 
         # S3에 업로드 되었던 이미지 삭제 비동기 처리
-        delete_from_s3.delay(image_url)
+        delete_from_s3.delay(photo_id, image_url, result_image_url)
 
         # Photo 모델에서 삭제
         photo.delete()
