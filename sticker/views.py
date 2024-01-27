@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.core.files.base import ContentFile
 from .models import Sticker
-from .serializers import StickerSerializer, AiStickerKeywordRequestSerializer, AiStickerGenerationResponseSerializer
+from .serializers import StickerSerializer, AiStickerKeywordRequestSerializer
 from rembg import remove
 import uuid
 import os
@@ -144,22 +144,20 @@ class StickerDeleteView(APIView):
 class AiStickerView(APIView):
     # AI 스티커 생성
     @swagger_auto_schema(
-        request_body=AiStickerKeywordRequestSerializer,
-        response_body=AiStickerGenerationResponseSerializer
+        request_body=AiStickerKeywordRequestSerializer
     )
     def post(self, request, *args, **kwargs):
         if not request.user:
             return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        client = OpenAI(api_key=AI_STICKER_KEY)
         keyword = request.data.get('keyword')
 
         if not keyword:
             return Response({'error': 'No keyword provided'}, status=status.HTTP_400_BAD_REQUEST)
 
-        aisticker_create.delay(client, keyword)
+        task = aisticker_create.delay(keyword)
 
-        return Response({"message": "Ai Sticker is created"})
+        return Response({"message": "Ai Sticker is created", "task_id": task.id})
 
     # 현재 사용자의 모든 AI 스티커 반환
     @swagger_auto_schema(

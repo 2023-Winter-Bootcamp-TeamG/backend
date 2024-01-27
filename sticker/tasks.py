@@ -10,6 +10,7 @@ from rembg import remove
 from io import BytesIO
 import requests
 from PIL import Image
+from openai import OpenAI
 
 @shared_task
 def save_sticker_model(input_image, extension, member_id, is_ai):
@@ -34,7 +35,10 @@ def delete_from_s3(image_url):
     s3.delete_object(Bucket=bucket_name, Key=image_url)
 
 @shared_task
-def aisticker_create(client, keyword):
+def aisticker_create(keyword):
+
+    client = OpenAI(api_key=settings.AI_STICKER_KEY)
+
     # 이미지 생성
     url_response = client.images.generate(
         model="dall-e-3",

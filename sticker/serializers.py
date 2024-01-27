@@ -10,6 +10,3 @@ class StickerSerializer(serializers.ModelSerializer):
 
 class AiStickerKeywordRequestSerializer(serializers.Serializer):
     keyword = serializers.CharField(required=True, help_text="Text keyword for the image generation.")
-
-class AiStickerGenerationResponseSerializer(serializers.Serializer):
-    img_str = serializers.CharField(help_text="Base64 encoded image data.")
