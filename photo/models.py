@@ -50,7 +50,7 @@ class CustomedPhoto(djongo_models.Model):
     textboxes = djongo_models.JSONField()  # TextBox 데이터를 JSON 형태로 저장
 
 
-class Meta:
+    class Meta:
         managed = False
 
     def __str__(self):
