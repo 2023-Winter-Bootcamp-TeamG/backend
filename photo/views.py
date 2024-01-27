@@ -53,31 +53,35 @@ class PhotoManageView(APIView):
     def post(self, request, *args, **kwargs):
         if not request.user.id:
             return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
-        member_id = request.user.id
+        member_id = request.user.id # 현재 사용자의 id
 
-        result_photo_title = request.data.get('title')
+        result_photo_title = request.data.get('title') # 리퀘스트 바디의 title 갖고옴
 
-        photo_data_with_prefix = request.data.get('photo_data')
-        result_photo_data_with_prefix = request.data.get('result_photo_data')
-        stickers_data = request.data.get('stickers', [])
-        textboxes_data = request.data.get('textboxes', [])
+        photo_data_with_prefix = request.data.get('photo_data') # 접두사 포함된 원본 사진
+        result_photo_data_with_prefix = request.data.get('result_photo_data') # 접두사 포함된 결과 사진
+        stickers_data = request.data.get('stickers', []) # 스티커들을 배열형태로 저장
+        textboxes_data = request.data.get('textboxes', []) # 텍스트박스들을 배열형태로 저장
 
+        # 접두사 부분과 데이터 부분 분리
         photo_match = re.match(r'data:image/(?P<format>\w+);base64,(?P<data>.+)', photo_data_with_prefix)
         result_photo_match = re.match(r'data:image/(?P<format>\w+);base64,(?P<data>.+)', result_photo_data_with_prefix)
 
         if (not photo_match) or (not result_photo_match):
             return Response({"error": "Invalid image data format"}, status=status.HTTP_400_BAD_REQUEST)
 
+        # 데이터부분 추출
         photo_format = photo_match.group('format')
         base64_photo = photo_match.group('data')
 
         result_photo_format = result_photo_match.group('format')
         base64_result_photo = result_photo_match.group('data')
 
+        # 확장자 추출
         photo_extension = "." + photo_format.lower()
         result_photo_extension = "." + result_photo_format.lower()
 
         try:
+            # 디코딩
             photo_data = base64.b64decode(base64_photo)
             result_photo_data = base64.b64decode(base64_result_photo)
         except Exception as e:
@@ -86,32 +90,6 @@ class PhotoManageView(APIView):
         save_photo_model.delay(member_id, photo_data, photo_extension, result_photo_data, result_photo_extension, stickers_data, textboxes_data, result_photo_title)
 
         return Response({"message": "Save processing started"}, status=status.HTTP_202_ACCEPTED)
-
-    # # base64 인코딩된 이미지 데이터를 받음
-        # base64_image_with_prefix = request.data.get('url') # request의 url을 가져옴
-        # image_title = request.data.get('title') # request의 title을 가져옴
-        #
-        # if not base64_image_with_prefix:
-        #     return Response({"error": "No image provided"}, status=status.HTTP_400_BAD_REQUEST)
-        #
-        # match = re.match(r'data:image/(?P<format>\w+);base64,(?P<data>.+)', base64_image_with_prefix)
-        # if not match:
-        #     return Response({"error": "Invalid image data format"}, status=status.HTTP_400_BAD_REQUEST)
-        #
-        # image_format = match.group('format')
-        # base64_image = match.group('data')
-        #
-        # extension = "." + image_format.lower() # 확장자 설정
-        #
-        # try:
-        #     image_data = base64.b64decode(base64_image)
-        # except Exception as e:
-        #     return Response({"error": "Invalid image data: " + str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        #
-        # # S3 업로드 및 Photo 객체 저장 비동기 처리
-        # save_photo_model.delay(image_data, image_title, extension, member_id)
-        #
-        # return Response({"message": "Save processing started"}, status=status.HTTP_202_ACCEPTED)
 
     # 앨범에 저장된 전체 사진 보기
     @swagger_auto_schema(
@@ -182,21 +160,21 @@ class PhotoEditView(APIView):
         if not photo_id:
             return Response({"error": "Photo ID is required"}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            photo = Photo.objects.get(id=photo_id)
-            result_photo = Photo.objects.get(origin=photo)
+            photo = Photo.objects.get(id=photo_id) # 원본 사진 객체
+            result_photo = Photo.objects.get(origin=photo) # 원본사진을 origin으로 가지는 결과사진 객체
             # 현재 클라이언트가 사진의 주인이 아니라면 error 반환
             if photo.member_id != request.user:
                 return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
         except Photo.DoesNotExist:
             return Response({"error": "Photo not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        image_url = photo.url.name  # 이미지 파일의 S3 경로
-        result_image_url = result_photo.url.name
+        image_url = photo.url.name  # 원본 이미지 파일의 S3 경로
+        result_image_url = result_photo.url.name # 결과 이미지 파일의 S3 경로
 
-        # S3에 업로드 되었던 이미지 삭제 비동기 처리
+        # S3에 업로드 되었던 이미지 삭제 + MongoDB의 객체 삭제 비동기 처리
         delete_from_s3.delay(photo_id, image_url, result_image_url)
 
-        # Photo 모델에서 삭제
+        # Photo 모델에서 삭제 (cascade 설정으로 인해 result_photo도 같이 삭제됨)
         photo.delete()
 
         return Response({"message": "Delete processing started"}, status=status.HTTP_202_ACCEPTED)
@@ -305,23 +283,3 @@ class QRAPIView(APIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
         # return Response({'Message': 'Success'}, status=status.HTTP_200_OK)
-
-class PhotoTestView(APIView):
-    @swagger_auto_schema(
-        operation_summary="Upload a New Photo",
-        operation_description="Upload a new photo with stickers and textboxes.",
-        request_body=CustomedPhotoSerializer,
-        responses={
-            201: CustomedPhotoSerializer(many=False),
-            400: 'Bad Request',
-            401: 'Unauthorized'
-        }
-    )
-    def post(self, request, *args, **kwargs):
-        serializer = CustomedPhotoSerializer(data=request.data)
-        if serializer.is_valid():
-            # 현재 사용자 ID 설정
-            serializer.validated_data['user_id'] = request.user.id
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -1,7 +1,6 @@
 from django.urls import path
 from .views import PhotoManageView, PhotoEditView
 from .views import QRAPIView
-from .views import PhotoTestView
 
 urlpatterns = [
     # 사진 저장/전체 불러오기
@@ -10,6 +9,4 @@ urlpatterns = [
     path('api/v1/photos/<int:id>/', PhotoEditView.as_view(), name='photo-edit'),
     # qr 코드
     path('api/v1/photos/qr/<int:id>/', QRAPIView.as_view(), name='get qr code'),
-    # MongoDB Test
-    path('api/v1/photos/test', PhotoTestView.as_view(), name='save in Mongo'),
     ]

@@ -23,7 +23,6 @@ class UsedSticker(djongo_models.Model):
     y = djongo_models.FloatField()
     size = djongo_models.IntegerField()
 
-    # 추상 모델 지정
     class Meta:
         managed = False
 
@@ -36,7 +35,6 @@ class TextBox(djongo_models.Model):
     color = djongo_models.CharField(max_length=30)
     font = djongo_models.CharField(max_length=30)
 
-    #추상 모델 지정
     class Meta:
         managed = False
 
@@ -47,7 +45,6 @@ class CustomedPhoto(djongo_models.Model):
     photo_url = djongo_models.URLField()
     stickers = djongo_models.JSONField()  # UsedSticker 데이터를 JSON 형태로 저장
     textboxes = djongo_models.JSONField()  # TextBox 데이터를 JSON 형태로 저장
-
 
     class Meta:
         managed = False
