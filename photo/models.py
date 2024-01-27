@@ -46,10 +46,11 @@ class CustomedPhoto(djongo_models.Model):
     user_id = djongo_models.IntegerField()
     photo_id = djongo_models.IntegerField()
     photo_url = djongo_models.URLField()
-    stickers = djongo_models.ArrayField(model_container=UsedSticker)
-    textboxes = djongo_models.ArrayField(model_container=TextBox)
+    stickers = djongo_models.JSONField()  # UsedSticker 데이터를 JSON 형태로 저장
+    textboxes = djongo_models.JSONField()  # TextBox 데이터를 JSON 형태로 저장
 
-    class Meta:
+
+class Meta:
         managed = False
 
     def __str__(self):
