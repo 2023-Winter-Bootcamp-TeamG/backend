@@ -215,6 +215,30 @@ class PhotoEditView(APIView):
             return Response({"Error": "photo not found"}, status=status.HTTP_404_NOT_FOUND)
 
 class QrPhotoView(APIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['image'],
+            properties={
+                'image': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Base64 인코딩된 이미지 데이터'
+                ),
+            },
+        ),
+        responses={
+            status.HTTP_200_OK: openapi.Response(
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'photo_id': openapi.Schema(type=openapi.TYPE_INTEGER)
+                    }
+                )
+            ),
+            status.HTTP_400_BAD_REQUEST: '잘못된 요청',
+            status.HTTP_401_UNAUTHORIZED: '인증되지 않은 사용자'
+        }
+    )
     def post(self, request, *args, **kwargs):
         if not request.user.id:
             return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
