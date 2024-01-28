@@ -220,23 +220,19 @@ class QrPhotoView(APIView):
             type=openapi.TYPE_OBJECT,
             required=['image'],
             properties={
-                'image': openapi.Schema(
-                    type=openapi.TYPE_STRING,
-                    description='Base64 인코딩된 이미지 데이터'
-                ),
+                'image': openapi.Schema(type=openapi.TYPE_STRING,
+                                        description='Base64 encoded image string with format prefix (e.g., data:image/png;base64,XXXX)')
             },
         ),
         responses={
-            status.HTTP_200_OK: openapi.Response(
-                schema=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        'photo_id': openapi.Schema(type=openapi.TYPE_INTEGER)
-                    }
-                )
-            ),
-            status.HTTP_400_BAD_REQUEST: '잘못된 요청',
-            status.HTTP_401_UNAUTHORIZED: '인증되지 않은 사용자'
+            200: openapi.Response('Photo uploaded successfully', openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'photo_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the uploaded photo')
+                }
+            )),
+            400: openapi.Response('Bad Request'),
+            401: openapi.Response('Unauthorized')
         }
     )
     def post(self, request, *args, **kwargs):
