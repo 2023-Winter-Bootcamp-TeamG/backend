@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Sticker
 
+
 class StickerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sticker
@@ -10,3 +11,11 @@ class StickerSerializer(serializers.ModelSerializer):
 
 class AiStickerKeywordRequestSerializer(serializers.Serializer):
     keyword = serializers.CharField(required=True, help_text="Text keyword for the image generation.")
+
+
+class AiStickerTaskIdRequestSerializer(serializers.Serializer):
+    task_id = serializers.CharField(required=True, help_text="task ID for the AI-generated image.")
+
+
+class AiStickerTaskIdRequestSerializer(serializers.Serializer):
+    task_id = serializers.CharField(required=True, help_text="The task ID for the AI-generated image.")

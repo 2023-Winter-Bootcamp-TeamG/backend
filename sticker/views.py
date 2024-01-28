@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.core.files.base import ContentFile
 from .models import Sticker
-from .serializers import StickerSerializer, AiStickerKeywordRequestSerializer
+from .serializers import StickerSerializer, AiStickerKeywordRequestSerializer, AiStickerTaskIdRequestSerializer
 from rembg import remove
 import uuid
 import os
@@ -217,8 +217,13 @@ class AiStickerSaveView(APIView):
         if not request.user:
             return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        # 셀러리 태스크 실행 결과 받기
-        task_id = request.data.get('task_id')
+        serializer = AiStickerTaskIdRequestSerializer(data=request.data)
+
+        if serializer.is_valid():
+            task_id = serializer.validated_data['task_id']
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         result = AsyncResult(task_id)
 
         if not result.ready():
@@ -272,6 +277,7 @@ class AiStickerDeleteView(APIView):
         sticker.delete()
 
         return Response({"message": "Delete processing started"}, status=status.HTTP_202_ACCEPTED)
+
 
 # 태스크 상태 조회
 class AiStickerTaskView(APIView):
