@@ -68,7 +68,10 @@ def save_aisticker_model(img_str, member_id, is_ai):
 
     # 이미지 데이터 디코딩
     input_image = base64.b64decode(img_str)
-    extension = input_image.rsplit(".", 1)[-1]
+    print(type(input_image))
+    input_image_str = input_image.decode("utf-8")
+
+    extension = input_image_str.rsplit(".", 1)[-1]
     # 고유한 파일명 생성(S3는 같은 이름의 파일을 업로드할 시 덮어쓰기 때문)
     image_name = f"{uuid.uuid4()}.{extension}"
     print(image_name)
