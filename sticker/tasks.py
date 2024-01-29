@@ -66,20 +66,11 @@ def aisticker_create(keyword):
 @shared_task
 def save_aisticker_model(img_str, member_id, is_ai):
 
-    # 인코딩된 이미지 데이터 검사 및 처리
-    match = re.match(r'data:image/(?P<format>\w+);base64,(?P<data>.+)', img_str)
-
-    # 이미지 형식 추출
-    image_format = match.group('format')
-    # 인코딩된 이미지 데이터
-    base64_image = match.group('data')
-    # 확장자 설정
-    extension = "." + image_format.lower()
     # 이미지 데이터 디코딩
-    input_image = base64.b64decode(base64_image)
+    input_image = base64.b64decode(img_str)
 
     # 고유한 파일명 생성(S3는 같은 이름의 파일을 업로드할 시 덮어쓰기 때문)
-    image_name = f"{uuid.uuid4()}{extension}"
+    image_name = f"{uuid.uuid4()}"
 
     # 변환된 바이트 데이터의 배경 제거
     output_image = remove(input_image)
