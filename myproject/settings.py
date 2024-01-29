@@ -26,8 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['www.doodlefilm.store', 'localhost', '*']
-
+ALLOWED_HOSTS = ['www.doodlefilm.store', 'localhost', 'doodlefilm.store']
 
 # Application definition
 
@@ -45,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework', #djangorestframework
     'frame',
     'django_prometheus',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -57,7 +57,19 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_prometheus.middleware.PrometheusAfterMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://doodlefilm.store",
+    "https://doodlefilm.store",
+    "http://www.doodlefilm.store",
+    "https://www.doodlefilm.store",
+    "http://localhost:8001",  # 백엔드
+    "http://localhost:5173",  # 프론트엔드
+    "http://localhost",       # 리버스 프록시를 통한 접근
+]
+
 
 ROOT_URLCONF = 'myproject.urls'
 
@@ -189,6 +201,13 @@ AUTH_USER_MODEL = 'member.Member'
 # Celery 메세지 브로커 설정
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
 
-CSRF_TRUSTED_ORIGINS = ['http://localhost:5173']
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:5173',
+    'http://doodlefilm.store',
+    'https://doodlefilm.store',
+    'http://www.doodlefilm.store',
+    'https://www.doodlefilm.store'
+]
 
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 

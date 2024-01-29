@@ -1,6 +1,10 @@
 import base64
 import io
 from .models import Photo, TextBox, UsedSticker, Drawing, CustomedPhoto
+import uuid
+from django.core.files.base import ContentFile
+from member.models import Member
+from .models import Photo
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -265,6 +269,67 @@ class PhotoEditView(APIView):
 
         except Photo.DoesNotExist:
             return Response({"Error": "photo not found"}, status=status.HTTP_404_NOT_FOUND)
+
+class QrPhotoView(APIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['image'],
+            properties={
+                'image': openapi.Schema(type=openapi.TYPE_STRING,
+                                        description='Base64 encoded image string with format prefix (e.g., data:image/png;base64,XXXX)')
+            },
+        ),
+        responses={
+            200: openapi.Response('Photo uploaded successfully', openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'photo_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the uploaded photo')
+                }
+            )),
+            400: openapi.Response('Bad Request'),
+            401: openapi.Response('Unauthorized')
+        }
+    )
+    def post(self, request, *args, **kwargs):
+        if not request.user.id:
+            return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        member_id = request.user.id
+
+        # base64 인코딩된 이미지 데이터를 받음
+        base64_image_with_prefix = request.data.get('image') # request의 url을 가져옴
+
+        if not base64_image_with_prefix:
+            return Response({"error": "No image provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        match = re.match(r'data:image/(?P<format>\w+);base64,(?P<data>.+)', base64_image_with_prefix)
+        if not match:
+            return Response({"error": "Invalid image data format"}, status=status.HTTP_400_BAD_REQUEST)
+
+        image_format = match.group('format')
+        base64_image = match.group('data')
+
+        extension = "." + image_format.lower() # 확장자 설정
+
+        try:
+            image_data = base64.b64decode(base64_image)
+        except Exception as e:
+            return Response({"error": "Invalid image data: " + str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        image_name = f"{uuid.uuid4()}{extension}"
+
+        member = Member.objects.get(id=member_id)
+
+        result_image_file = ContentFile(image_data, name=image_name)
+
+        photo = Photo(member_id=member, url=result_image_file)
+        photo.save()
+
+        response_data = {'photo_id': photo.id}
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
 
 class QRAPIView(APIView):
     def get(self, request, *args, **kwargs):
