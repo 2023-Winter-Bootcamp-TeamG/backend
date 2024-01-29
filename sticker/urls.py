@@ -12,7 +12,6 @@ urlpatterns = [
     # AI 스티커
     path('api/v1/stickers/ai/', AiStickerView.as_view(), name='ai sticker'),
     path('api/v1/stickers/ai/save', AiStickerSaveView.as_view(), name='save ai sticker'),
-    path('api/v1/stickers/ai/<int:id>/', AiStickerDeleteView.as_view(), name='sticker-delete'),
-
+    # 태스크 ID 조회
     path('api/v1/stickers/<str:task_id>/', AiStickerTaskView.as_view(), name='ai sticker task')
 ]

@@ -241,44 +241,6 @@ class AiStickerSaveView(APIView):
 
         return Response({"message": "Save processing started"}, status=status.HTTP_202_ACCEPTED)
 
-
-# 스티커 삭제 뷰
-class AiStickerDeleteView(APIView):
-    @swagger_auto_schema(
-        operation_description="Delete a sticker by ID",
-        manual_parameters=[
-            openapi.Parameter(
-                'id', openapi.IN_PATH,
-                description="ID of the sticker to delete",
-                type=openapi.TYPE_INTEGER,
-                required=True,
-            ),
-        ],
-        responses={204: "No Content"}
-    )
-    def delete(self, request, *args, **kwargs):
-        sticker_id = kwargs.get("id")
-        if not sticker_id:
-            return Response({"error": "Sticker ID is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            sticker = Sticker.objects.get(id=sticker_id, is_ai=True)
-            if sticker.member_id != request.user:
-                return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
-        except Sticker.DoesNotExist:
-            return Response({"error": "Sticker not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        image_url = sticker.image.name  # 스티커 파일의 S3 경로
-
-        # S3에서 스티커 파일 삭제 비동기처리
-        delete_from_s3.delay(image_url)
-
-        # Sticker 모델에서 삭제
-        sticker.delete()
-
-        return Response({"message": "Delete processing started"}, status=status.HTTP_202_ACCEPTED)
-
-
 # 태스크 상태 조회
 class AiStickerTaskView(APIView):
     def get(self, request, task_id, *args, **kwargs):
