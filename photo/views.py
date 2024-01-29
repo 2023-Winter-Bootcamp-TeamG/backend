@@ -61,7 +61,7 @@ class PhotoManageView(APIView):
         result_photo_data_with_prefix = request.data.get('result_photo_data') # 접두사 포함된 결과 사진
         stickers_data = request.data.get('stickers', []) # 스티커들을 배열형태로 저장
         textboxes_data = request.data.get('textboxes', []) # 텍스트박스들을 배열형태로 저장
-
+        drawings_data = request.data.get('drawings', []) # 드로잉들을 배열형태로 저장
         # 접두사 부분과 데이터 부분 분리
         photo_match = re.match(r'data:image/(?P<format>\w+);base64,(?P<data>.+)', photo_data_with_prefix)
         result_photo_match = re.match(r'data:image/(?P<format>\w+);base64,(?P<data>.+)', result_photo_data_with_prefix)
@@ -87,7 +87,7 @@ class PhotoManageView(APIView):
         except Exception as e:
             return Response({"error": "Invalid image data: " + str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        save_photo_model.delay(member_id, photo_data, photo_extension, result_photo_data, result_photo_extension, stickers_data, textboxes_data, result_photo_title)
+        save_photo_model.delay(member_id, photo_data, photo_extension, result_photo_data, result_photo_extension, stickers_data, textboxes_data, drawings_data, result_photo_title)
 
         return Response({"message": "Save processing started"}, status=status.HTTP_202_ACCEPTED)
 
@@ -226,6 +226,7 @@ class PhotoEditView(APIView):
         result_photo_data_with_prefix = request.data.get('result_photo_data')
         stickers_data = request.data.get('stickers', [])
         textboxes_data = request.data.get('textboxes', [])
+        drawings_data = request.data.get('drawings', [])
         result_photo_match = re.match(r'data:image/(?P<format>\w+);base64,(?P<data>.+)', result_photo_data_with_prefix)
 
         if not result_photo_match:
@@ -248,7 +249,7 @@ class PhotoEditView(APIView):
             original_file_name = os.path.basename(photo.url.name)
 
             # photo 업데이트 비동기처리
-            update_photo.delay(photo_id, result_photo_data, original_file_name, stickers_data, textboxes_data)
+            update_photo.delay(photo_id, result_photo_data, original_file_name, stickers_data, textboxes_data, drawings_data)
 
             return Response({"message": "Update processing started"}, status=status.HTTP_202_ACCEPTED)
 

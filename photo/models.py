@@ -38,6 +38,16 @@ class TextBox(djongo_models.Model):
     class Meta:
         managed = False
 
+# 커스텀에 사용된 드로잉
+class Drawing(djongo_models.Model):
+    x = djongo_models.FloatField()
+    y = djongo_models.FloatField()
+    size = djongo_models.IntegerField()
+    color = djongo_models.CharField(max_length=30)
+
+    class Meta:
+        managed = False
+
 # 커스텀 된 사진
 class CustomedPhoto(djongo_models.Model):
     user_id = djongo_models.IntegerField()
@@ -45,7 +55,7 @@ class CustomedPhoto(djongo_models.Model):
     photo_url = djongo_models.URLField()
     stickers = djongo_models.JSONField()  # UsedSticker 데이터를 JSON 형태로 저장
     textboxes = djongo_models.JSONField()  # TextBox 데이터를 JSON 형태로 저장
-
+    drawings = djongo_models.JSONField() # Drawing 데이터를 JSON 형태로 저장
     class Meta:
         managed = False
 

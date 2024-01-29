@@ -8,7 +8,7 @@ from myproject import settings
 from .serializers import CustomedPhotoSerializer
 
 @shared_task
-def save_photo_model(member_id, photo_data, photo_extension, result_photo_data, result_photo_extension, stickers_data, textboxes_data, result_photo_title):
+def save_photo_model(member_id, photo_data, photo_extension, result_photo_data, result_photo_extension, stickers_data, textboxes_data, drawings_data, result_photo_title):
     photo_name = f"{uuid.uuid4()}{photo_extension}"
     result_photo_name = f"{uuid.uuid4()}{result_photo_extension}"
 
@@ -27,7 +27,8 @@ def save_photo_model(member_id, photo_data, photo_extension, result_photo_data, 
     customed_photo_data = {
         'photo_url': photo.url.url,
         'stickers': stickers_data,
-        'textboxes': textboxes_data
+        'textboxes': textboxes_data,
+        'drawings': drawings_data
     }
 
     # 원본 사진, 스티커, 텍스트박스 몽고디비에 저장
@@ -49,7 +50,7 @@ def delete_from_s3(photo_id, image_url, result_image_url):
 
 
 @shared_task
-def update_photo(photo_id, result_photo_data, original_file_name, stickers_data, textboxes_data):
+def update_photo(photo_id, result_photo_data, original_file_name, stickers_data, textboxes_data, drawings_data):
     photo = Photo.objects.get(id=photo_id)
 
     # 기존 이미지 파일의 이름을 가진 새로운 이미지 파일 저장 -> S3는 같은 이름의 파일을 덮어씀
@@ -64,7 +65,8 @@ def update_photo(photo_id, result_photo_data, original_file_name, stickers_data,
     updated_photo_data = {
         'photo_url': customed_photo.photo_url,
         'stickers': stickers_data,
-        'textboxes': textboxes_data
+        'textboxes': textboxes_data,
+        'drawings': drawings_data
     }
 
     serializer = CustomedPhotoSerializer(customed_photo, data=updated_photo_data, partial=True)

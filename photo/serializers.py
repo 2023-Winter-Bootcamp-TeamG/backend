@@ -45,17 +45,25 @@ class TextBoxSerializer(serializers.Serializer):
     color = serializers.CharField(max_length=30)
     font = serializers.CharField(max_length=30)
 
+class DrawingSerializer(serializers.Serializer):
+    x = serializers.FloatField()
+    y = serializers.FloatField()
+    size = serializers.IntegerField()
+    color = serializers.CharField(max_length=30)
+
 class CustomedPhotoSerializer(serializers.ModelSerializer):
     stickers = UsedStickerSerializer(many=True)
     textboxes = TextBoxSerializer(many=True)
+    drawings = DrawingSerializer(many=True)
 
     class Meta:
         model = CustomedPhoto
-        fields = ['photo_url', 'stickers', 'textboxes']
+        fields = ['photo_url', 'stickers', 'textboxes', 'drawings']
 
     def create(self, validated_data):
         stickers_data = validated_data.pop('stickers', [])
         textboxes_data = validated_data.pop('textboxes', [])
+        drawings_data = validated_data.pop('drawings', [])
 
         # CustomedPhoto 인스턴스 생성
         customed_photo = CustomedPhoto(**validated_data)
@@ -63,6 +71,7 @@ class CustomedPhotoSerializer(serializers.ModelSerializer):
         # stickers와 textboxes 필드에 직렬화된 데이터 할당
         customed_photo.stickers = stickers_data
         customed_photo.textboxes = textboxes_data
+        customed_photo.drawings = drawings_data
 
         customed_photo.save(using='mongodb')
         return customed_photo
@@ -72,6 +81,7 @@ class CustomedPhotoSerializer(serializers.ModelSerializer):
         instance.photo_url = validated_data.get('photo_url', instance.photo_url)
         instance.stickers = validated_data.get('stickers', instance.stickers)
         instance.textboxes = validated_data.get('textboxes', instance.textboxes)
+        instance.drawings = validated_data.get('drawings', instance.drawings)
         instance.save(using='mongodb')
         return instance
 
