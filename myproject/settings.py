@@ -104,6 +104,19 @@ DATABASES = {
         'HOST': os.getenv('DB_HOST'), # 호스트는 도커 컨테이너 이름 127.0.0.1 / mysqldb / localhost
         'PORT': os.getenv('DB_PORT'),
     },
+    'mongodb': {
+        'ENGINE': 'djongo',
+        'NAME': os.getenv('MONGO_DB_NAME'),
+        'ENFORCE_SCHEMA': False,
+        'CLIENT': {
+            'host': os.getenv('MONGO_DB_HOST'),
+            'port': int(os.getenv('MONGO_DB_PORT', '27017')),
+            'username': os.getenv('MONGO_INITDB_ROOT_USERNAME'),
+            'password': os.getenv('MONGO_INITDB_ROOT_PASSWORD'),
+            'authSource': 'admin',
+            'authMechanism': 'SCRAM-SHA-1',
+        }
+    }
 }
 
 
