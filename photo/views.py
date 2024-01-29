@@ -1,6 +1,6 @@
 import base64
 import io
-from .models import Photo, TextBox, UsedSticker, CustomedPhoto
+from .models import Photo, TextBox, UsedSticker, Drawing, CustomedPhoto
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status

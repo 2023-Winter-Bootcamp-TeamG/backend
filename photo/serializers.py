@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Photo
-from .models import UsedSticker, TextBox, CustomedPhoto
+from .models import UsedSticker, TextBox, Drawing, CustomedPhoto
 
 class PhotoSerializer(serializers.ModelSerializer):
     class Meta:
