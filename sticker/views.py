@@ -210,8 +210,8 @@ class AiStickerView(APIView):
 # AI 스티커 저장
 class AiStickerSaveView(APIView):
     @swagger_auto_schema(
-        request_body=StickerSerializer,
-        responses={201:StickerSerializer}
+        request_body=AiStickerTaskIdRequestSerializer,
+        responses={201: StickerSerializer}
     )
     def post(self, request, *args, **kwargs):
         if not request.user:
