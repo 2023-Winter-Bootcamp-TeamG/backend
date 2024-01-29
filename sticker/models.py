@@ -2,6 +2,7 @@ from django.db import models
 from member.models import Member
 from django_prometheus.models import ExportModelOperationsMixin
 
+
 class Sticker(ExportModelOperationsMixin('sticker'), models.Model):
     # Member 모델의 PK를 참조하는 외래키
     member_id = models.ForeignKey(Member, on_delete=models.CASCADE, null=True)
@@ -13,6 +14,8 @@ class Sticker(ExportModelOperationsMixin('sticker'), models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
+
+    is_ai = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Sticker {self.id}"

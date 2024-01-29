@@ -177,4 +177,5 @@ CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
 
 CSRF_TRUSTED_ORIGINS = ['http://localhost:5173']
 
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 

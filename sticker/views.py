@@ -1,3 +1,4 @@
+import base64
 import boto3
 import openai
 from drf_yasg.utils import swagger_auto_schema
@@ -7,22 +8,26 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.core.files.base import ContentFile
 from .models import Sticker
-from .serializers import StickerSerializer, ImagePromptRequestSerializer, ImageGenerationResponseSerializer
+from .serializers import StickerSerializer, AiStickerKeywordRequestSerializer, AiStickerTaskIdRequestSerializer
 from rembg import remove
 import uuid
 import os
 from rest_framework.parsers import MultiPartParser, FormParser
 from drf_yasg import openapi
 from myproject.settings import AI_STICKER_KEY
-from .tasks import save_sticker_model, delete_from_s3, aisticker_url_encoding
+from .tasks import save_sticker_model, delete_from_s3, aisticker_create, save_aisticker_model
 from django.core.paginator import Paginator, EmptyPage
 import requests
 from PIL import Image
 from io import BytesIO
-import base64
+from celery.result import AsyncResult
+from myproject.celery import app
+import re
+
 
 class StickerManageView(APIView):
     parser_classes = [MultiPartParser, FormParser]  # 파일과 폼 데이터 처리
+
     @swagger_auto_schema(
         operation_description="create a new sticker",
         request_body=StickerSerializer,
@@ -45,7 +50,7 @@ class StickerManageView(APIView):
         extension = os.path.splitext(image_file.name)[1]
 
         # sticker S3 업로드 및 모델 저장 비동기처리
-        save_sticker_model.delay(input_image, extension, member_id)
+        save_sticker_model.delay(input_image, extension, member_id, is_ai=False)
 
         return Response({"message": "Save processing started"}, status=status.HTTP_202_ACCEPTED)
 
@@ -83,7 +88,7 @@ class StickerManageView(APIView):
             return Response({"error": "Invalid page or size parameter"}, status=status.HTTP_400_BAD_REQUEST)
 
         # 현재 사용자를 외래키로 가지는 Sticker들
-        stickers = Sticker.objects.filter(member_id=request.user)
+        stickers = Sticker.objects.filter(member_id=request.user, is_ai=False)
 
         paginator = Paginator(stickers, size)
 
@@ -117,12 +122,11 @@ class StickerDeleteView(APIView):
             return Response({"error": "Sticker ID is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            sticker = Sticker.objects.get(id=sticker_id)
+            sticker = Sticker.objects.get(id=sticker_id, is_ai=False)
             if sticker.member_id != request.user:
                 return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
         except Sticker.DoesNotExist:
             return Response({"error": "Sticker not found"}, status=status.HTTP_404_NOT_FOUND)
-
 
         image_url = sticker.image.name  # 스티커 파일의 S3 경로
 
@@ -134,43 +138,119 @@ class StickerDeleteView(APIView):
 
         return Response({"message": "Delete processing started"}, status=status.HTTP_202_ACCEPTED)
 
+
 # AI 스티커
+
 class AiStickerView(APIView):
     # AI 스티커 생성
     @swagger_auto_schema(
-        request_body=ImagePromptRequestSerializer,
-        responses={
-            200: ImageGenerationResponseSerializer,
-            400: 'Invalid input',
-            500: 'Internal server error'
-        }
+        request_body=AiStickerKeywordRequestSerializer
     )
     def post(self, request, *args, **kwargs):
-        client = OpenAI(api_key=AI_STICKER_KEY)
-        prompt = request.data.get('prompt')
-        if not prompt:
-            return Response({'error': 'No prompt provided'}, status=status.HTTP_400_BAD_REQUEST)
+        if not request.user:
+            return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        keyword = request.data.get('keyword')
+
+        if not keyword:
+            return Response({'error': 'No keyword provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        task = aisticker_create.delay(keyword)
+
+        return Response({"message": "Ai Sticker is created", "task_id": task.id})
+
+    # 현재 사용자의 모든 AI 스티커 반환
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name='page',
+                in_=openapi.IN_QUERY,
+                description='Page number',
+                type=openapi.TYPE_INTEGER,
+                default=1
+            ),
+            openapi.Parameter(
+                name='size',
+                in_=openapi.IN_QUERY,
+                description='Number of items per page',
+                type=openapi.TYPE_INTEGER,
+                default=12
+            )
+        ]
+    )
+    def get(self, request, *args, **kwargs):
+        # 현재 인증된 사용자의 member_id와 일치하는지 확인
+        if not request.user:
+            return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        page = request.GET.get('page', 1)
+        size = request.GET.get('size', 12)
 
         try:
-            # 이미지 생성
-            url_response = client.images.generate(
-                model="dall-e-3",
-                prompt=prompt+" 스티커",   # 만들 스티커 단어 입력
-                n=1,
-                size="1024x1024"
-            )
+            page = int(page)
+            size = int(size)
+        except ValueError:
+            return Response({"error": "Invalid page or size parameter"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # 생성된 이미지의 URL 추출
-            aisticker_url = url_response.data[0].url    # 이미지 url 출력
-            image_response = requests.get(aisticker_url)
-            if image_response.status_code == 200:
-                dalleimage = Image.open(BytesIO(image_response.content))
-            else:
-                return Response({'error': 'URL not switched into image'})
+        # 현재 사용자를 외래키로 가지는 Sticker들
+        stickers = Sticker.objects.filter(member_id=request.user, is_ai=True)
 
-            # AI 스티커 url 인코딩
-            img_str = aisticker_url_encoding.delay(dalleimage)
+        paginator = Paginator(stickers, size)
 
-            return Response({'img_str': img_str})
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        try:
+            stickers_page = paginator.page(page)
+        except EmptyPage:
+            return Response({"error": "Page out of range"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = StickerSerializer(stickers_page, many=True)
+
+        return Response(serializer.data)
+
+
+# AI 스티커 저장
+class AiStickerSaveView(APIView):
+    @swagger_auto_schema(
+        request_body=AiStickerTaskIdRequestSerializer,
+        responses={201: StickerSerializer}
+    )
+    def post(self, request, *args, **kwargs):
+        if not request.user:
+            return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        serializer = AiStickerTaskIdRequestSerializer(data=request.data)
+
+        if serializer.is_valid():
+            task_id = serializer.validated_data['task_id']
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        result = AsyncResult(task_id)
+
+        if not result.ready():
+            return Response({'error': 'Task is not completed yet'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if result.failed():
+            return Response({'error': 'Task failed'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Base64 인코딩된 이미지 데이터
+        img_str = result.result
+
+        member_id = request.user.id
+
+        save_aisticker_model.delay(img_str, member_id, is_ai=True)
+
+        return Response({"message": "Save processing started"}, status=status.HTTP_202_ACCEPTED)
+
+# 태스크 상태 조회
+class AiStickerTaskView(APIView):
+    def get(self, request, task_id, *args, **kwargs):
+        if not request.user:
+            return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        result = AsyncResult(task_id, app=app)
+        response_data = {
+            'task_id': task_id,
+            'status': result.status,
+            'result': result.result if result.ready() else None
+        }
+        return Response(response_data)
