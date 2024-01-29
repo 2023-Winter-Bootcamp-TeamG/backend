@@ -43,6 +43,11 @@ class PhotoManageView(APIView):
                     type=openapi.TYPE_ARRAY,
                     items=openapi.Items(type=openapi.TYPE_OBJECT, ref='#/definitions/TextBox'),
                     description='List of textboxes'
+                ),
+                'drawings': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_OBJECT, ref='#/definitions/Drawing'),
+                    description='List of drawings'
                 )
             }
         ),
@@ -215,6 +220,11 @@ class PhotoEditView(APIView):
                     type=openapi.TYPE_ARRAY,
                     items=openapi.Items(type=openapi.TYPE_OBJECT, ref='#/definitions/TextBox'),
                     description='List of textboxes'
+                ),
+                'drawings': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_OBJECT, ref='#/definitions/Drawing'),
+                    description='List of drawings'
                 )
             }
         ),
