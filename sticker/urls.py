@@ -1,8 +1,7 @@
 # myapp/urls.py
 
 from django.urls import path
-from .views import StickerManageView, StickerDeleteView, AiStickerView, AiStickerSaveView, AiStickerDeleteView, \
-    AiStickerTaskView
+from .views import StickerManageView, StickerDeleteView, AiStickerView, AiStickerSaveView, AiStickerTaskView
 
 urlpatterns = [
     # 스티커 저장, 불러오기 url
