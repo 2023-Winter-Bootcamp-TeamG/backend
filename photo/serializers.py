@@ -31,14 +31,23 @@ class QrSerializer(serializers.ModelSerializer):
         model = Photo
         fields = ['id', 'url']
 
+class SizeSerializer(serializers.Serializer):
+    width = serializers.IntegerField()
+    height = serializers.IntegerField()
+
+class PositionSerializer(serializers.Serializer):
+    x = serializers.FloatField()
+    y = serializers.FloatField()
+
+
 class UsedStickerSerializer(serializers.Serializer):
     url = serializers.URLField()
-    position = serializers.JSONField()
-    size = serializers.JSONField()
+    position = PositionSerializer()
+    size = SizeSerializer()
 
 class TextBoxSerializer(serializers.Serializer):
     text = serializers.CharField()
-    position = serializers.JSONField()
+    position = PositionSerializer()
     size = serializers.IntegerField()
     color = serializers.CharField(max_length=30)
     font = serializers.CharField(max_length=30)
