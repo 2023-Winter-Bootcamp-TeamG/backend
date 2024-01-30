@@ -35,13 +35,17 @@ class UsedStickerSerializer(serializers.Serializer):
     url = serializers.URLField()
     x = serializers.FloatField()
     y = serializers.FloatField()
-    size = serializers.IntegerField()
+    size = serializers.DictField(
+        child=serializers.IntegerField(),
+    )
 
 class TextBoxSerializer(serializers.Serializer):
     text = serializers.CharField()
     x = serializers.FloatField()
     y = serializers.FloatField()
-    size = serializers.IntegerField()
+    size = serializers.DictField(
+        child=serializers.IntegerField(),
+    )
     color = serializers.CharField(max_length=30)
     font = serializers.CharField(max_length=30)
 

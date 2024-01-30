@@ -21,7 +21,7 @@ class UsedSticker(djongo_models.Model):
     url = djongo_models.URLField()
     x = djongo_models.FloatField()
     y = djongo_models.FloatField()
-    size = djongo_models.IntegerField()
+    size = djongo_models.JSONField(default=dict)  # JSON 형태로 width와 height 저장
 
     class Meta:
         managed = False
@@ -31,7 +31,7 @@ class TextBox(djongo_models.Model):
     text = djongo_models.TextField()
     x = djongo_models.FloatField()
     y = djongo_models.FloatField()
-    size = djongo_models.IntegerField()
+    size = djongo_models.JSONField(default=dict)  # JSON 형태로 width와 height 저장
     color = djongo_models.CharField(max_length=30)
     font = djongo_models.CharField(max_length=30)
 
