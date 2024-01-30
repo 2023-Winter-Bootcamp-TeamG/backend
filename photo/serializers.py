@@ -33,19 +33,19 @@ class QrSerializer(serializers.ModelSerializer):
 
 class UsedStickerSerializer(serializers.Serializer):
     url = serializers.URLField()
-    x = serializers.FloatField()
-    y = serializers.FloatField()
+    position = serializers.DictField(
+        child=serializers.FloatField(),
+    )
     size = serializers.DictField(
         child=serializers.IntegerField(),
     )
 
 class TextBoxSerializer(serializers.Serializer):
     text = serializers.CharField()
-    x = serializers.FloatField()
-    y = serializers.FloatField()
-    size = serializers.DictField(
-        child=serializers.IntegerField(),
+    position = serializers.DictField(
+        child=serializers.FloatField(),
     )
+    size = serializers.IntegerField()
     color = serializers.CharField(max_length=30)
     font = serializers.CharField(max_length=30)
 
