@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['www.doodlefilm.store', 'localhost', 'doodlefilm.store']
+ALLOWED_HOSTS = ['www.doodlefilm.store', 'localhost', 'doodlefilm.store', 'django']
 
 # Application definition
 
