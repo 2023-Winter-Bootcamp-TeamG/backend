@@ -16,24 +16,33 @@ class Photo(ExportModelOperationsMixin('photo'), models.Model):
         return self.title
 
 ############## Models for MongoDB ###############
+class Size(djongo_models.Model):
+    width = djongo_models.IntegerField()
+    height = djongo_models.IntegerField()
+    class Meta:
+        managed = False
+
+class Position(djongo_models.Model):
+    x = djongo_models.FloatField()
+    y = djongo_models.FloatField()
+    class Meta:
+        managed = False
+
 # 커스텀에 사용된 스티커
 class UsedSticker(djongo_models.Model):
     url = djongo_models.URLField()
-    position = djongo_models.JSONField(default=dict)
-    size = djongo_models.JSONField(default=dict)  # JSON 형태로 width와 height 저장
-
-
+    position = djongo_models.JSONField() # JSON 형태로 Position 저장
+    size = djongo_models.JSONField()  # JSON 형태로 Size 저장
     class Meta:
         managed = False
 
 # 커스텀에 사용된 텍스트박스
 class TextBox(djongo_models.Model):
     text = djongo_models.TextField()
-    position = djongo_models.JSONField(default=dict)
+    position = djongo_models.JSONField() # JSON 형태로 Position 저장
     size = djongo_models.IntegerField()
     color = djongo_models.CharField(max_length=30)
     font = djongo_models.CharField(max_length=30)
-
     class Meta:
         managed = False
 
@@ -43,7 +52,6 @@ class Drawing(djongo_models.Model):
     y = djongo_models.FloatField()
     size = djongo_models.IntegerField()
     color = djongo_models.CharField(max_length=30)
-
     class Meta:
         managed = False
 
