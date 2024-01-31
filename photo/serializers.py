@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Photo
 from .models import UsedSticker, TextBox, Drawing, CustomedPhoto
+import collections
 
 class PhotoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -49,8 +50,18 @@ class PathSerializer(serializers.Serializer):
         return {'command': command, 'points': points}
 
     def to_representation(self, instance):
-        representation = [instance.command] + instance.points
-        return representation
+        # instance는 Path 모델 인스턴스 또는 OrderedDict 객체일 수 있습니다.
+        # OrderedDict 객체인 경우, 'command'와 'points' 키를 사용하여 데이터를 추출합니다.
+        if isinstance(instance, collections.OrderedDict):
+            command = instance.get('command')
+            points = instance.get('points', [])
+        # Path 모델 인스턴스인 경우, 직접 속성 값을 사용합니다.
+        else:
+            command = instance.command
+            points = instance.points
+
+        # 명령어를 포함한 전체 리스트를 반환합니다.
+        return [command] + points
 
 
 class UsedStickerSerializer(serializers.Serializer):
