@@ -45,7 +45,8 @@ class PathSerializer(serializers.Serializer):
 
     def to_representation(self, instance):
         # 데이터를 시리얼라이징할 때의 로직
-        pass
+        representation = [instance.command] + instance.points
+        return representation
 
     def to_internal_value(self, data):
         # 데이터를 디시리얼라이징할 때의 로직
