@@ -7,8 +7,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.files.base import ContentFile
+
+from member.models import Member
 from .models import Sticker
-from .serializers import StickerSerializer, AiStickerKeywordRequestSerializer, AiStickerTaskIdRequestSerializer
+from .serializers import StickerSerializer, AiStickerKeywordRequestSerializer, AiStickerTaskIdRequestSerializer, BasicSerializer
 from rembg import remove
 import uuid
 import os
@@ -137,6 +139,68 @@ class StickerDeleteView(APIView):
         sticker.delete()
 
         return Response({"message": "Delete processing started"}, status=status.HTTP_202_ACCEPTED)
+
+class BasicStickerView(APIView):
+    parser_classes = [MultiPartParser, FormParser]
+
+    @swagger_auto_schema(
+        operation_description="upload a basic sticker",
+        request_body=BasicSerializer,
+        responses={202: BasicSerializer}
+    )
+    def post(self, request, *args, **kwargs):
+        member_id = request.user.id
+
+        image_file = request.FILES.get('image')  # request의 image를 가져옴
+        if not image_file:
+            return Response({"error": "No image provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        input_image = image_file.read()  # 이미지를 바이트 데이터로 변환
+
+        # 원본 파일의 확장자 추출
+        extension = os.path.splitext(image_file.name)[1]
+
+        image_name = f"{uuid.uuid4()}{extension}"
+
+        output_image = remove(input_image)  # 변환된 바이트 데이터의 배경 제거
+
+        # S3에 업로드 할 최종 이미지
+        output_image_file = ContentFile(output_image, name=image_name)
+
+        member = Member.objects.get(id=member_id)
+
+        # Sticker 인스턴스 생성 및 저장
+        sticker = Sticker(member_id=member, image=output_image_file, is_basic=True)
+        sticker.save()
+
+        return Response({"message": "Save processing started"}, status=status.HTTP_202_ACCEPTED)
+
+    def get(self,  request, *args, **kwargs):
+        if not request.user:
+            return Response({"error": "User is not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        page = request.GET.get('page', 1)
+        size = request.GET.get('size', 12)
+
+        try:
+            page = int(page)
+            size = int(size)
+        except ValueError:
+            return Response({"error": "Invalid page or size parameter"}, status=status.HTTP_400_BAD_REQUEST)
+
+        stickers = Sticker.objects.filter(is_basic=True)
+
+        paginator = Paginator(stickers, size)
+
+        try:
+            stickers_page = paginator.page(page)
+        except EmptyPage:
+            return Response({"error": "Page out of range"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = BasicSerializer(stickers_page, many=True)
+
+        return Response(serializer.data)
+
 
 
 # AI 스티커

@@ -16,6 +16,7 @@ class Sticker(ExportModelOperationsMixin('sticker'), models.Model):
     deleted_at = models.DateTimeField(null=True, blank=True)
 
     is_ai = models.BooleanField(default=False)
+    is_basic = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Sticker {self.id}"
