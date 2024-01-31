@@ -49,7 +49,7 @@ def aisticker_create(keyword):
     )
 
     # # 생성된 이미지의 URL 추출
-    aisticker_url = url_response.data[0].url  # 이미지 url 출력
+    aisticker_url = url_response['data'][0]['url']  # 이미지 url 출력
     # image_response = requests.get(aisticker_url)
     # dalleimage = Image.open(BytesIO(image_response.content))
     #
