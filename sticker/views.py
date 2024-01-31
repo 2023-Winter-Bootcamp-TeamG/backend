@@ -162,10 +162,8 @@ class BasicStickerView(APIView):
 
         image_name = f"{uuid.uuid4()}{extension}"
 
-        output_image = remove(input_image)  # 변환된 바이트 데이터의 배경 제거
-
         # S3에 업로드 할 최종 이미지
-        output_image_file = ContentFile(output_image, name=image_name)
+        output_image_file = ContentFile(input_image, name=image_name)
 
         member = Member.objects.get(id=member_id)
 
