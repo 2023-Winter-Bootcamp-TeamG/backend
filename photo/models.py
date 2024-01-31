@@ -56,7 +56,7 @@ class TextBox(djongo_models.Model):
 
 # 커스텀에 사용된 드로잉
 class Drawing(djongo_models.Model):
-    fill = djongo_models.CharField(max_length=30)
+    fill = djongo_models.IntegerField()
     path = djongo_models.JSONField()
     stroke = djongo_models.CharField(max_length=30)
     strokeLineCap = djongo_models.CharField(max_length=30)

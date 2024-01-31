@@ -66,7 +66,7 @@ class TextBoxSerializer(serializers.Serializer):
     font = serializers.CharField(max_length=30)
 
 class DrawingSerializer(serializers.Serializer):
-    fill = serializers.CharField(max_length=30)
+    fill = serializers.IntegerField()
     path = PathSerializer(many=True)
     stroke = serializers.CharField(max_length=30)
     strokeLineCap = serializers.CharField(max_length=30)
