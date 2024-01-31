@@ -73,8 +73,7 @@ class DrawingSerializer(serializers.Serializer):
     strokeWidth = serializers.IntegerField()
     x = serializers.FloatField()
     y = serializers.FloatField()
-    size = serializers.IntegerField()
-    color = serializers.CharField(max_length=30)
+
 
 class CustomedPhotoSerializer(serializers.ModelSerializer):
     stickers = UsedStickerSerializer(many=True)

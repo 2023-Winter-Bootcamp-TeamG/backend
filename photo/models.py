@@ -63,8 +63,6 @@ class Drawing(djongo_models.Model):
     strokeWidth = djongo_models.IntegerField()
     x = djongo_models.FloatField()
     y = djongo_models.FloatField()
-    size = djongo_models.IntegerField()
-    color = djongo_models.CharField(max_length=30)
     class Meta:
         managed = False
 
