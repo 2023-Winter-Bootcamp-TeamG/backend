@@ -12,7 +12,7 @@ class BasicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sticker
         fields = ['id', 'member_id', 'image', 'created_at', 'updated_at', 'deleted_at', 'is_basic']
-
+        read_only_fields = ['id', 'member_id', 'created_at', 'updated_at', 'deleted_at', 'is_basic']
 class AiStickerKeywordRequestSerializer(serializers.Serializer):
     keyword = serializers.CharField(required=True, help_text="Text keyword for the image generation.")
 
