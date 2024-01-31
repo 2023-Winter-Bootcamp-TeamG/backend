@@ -28,6 +28,14 @@ class Position(djongo_models.Model):
     class Meta:
         managed = False
 
+class Path(djongo_models.Model):
+    command = djongo_models.CharField(max_length=10)
+    points = djongo_models.JSONField()
+
+    class Meta:
+        managed = False
+
+
 # 커스텀에 사용된 스티커
 class UsedSticker(djongo_models.Model):
     url = djongo_models.URLField()
@@ -49,7 +57,7 @@ class TextBox(djongo_models.Model):
 # 커스텀에 사용된 드로잉
 class Drawing(djongo_models.Model):
     fill = djongo_models.CharField(max_length=30)
-    path = djongo_models.JSONField()
+    path = djongo_models.ArrayModelField(model_container=Path)
     stroke = djongo_models.CharField(max_length=30)
     strokeLineCap = djongo_models.CharField(max_length=30)
     strokeWidth = djongo_models.IntegerField()
