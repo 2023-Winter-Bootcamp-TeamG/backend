@@ -49,7 +49,7 @@ def aisticker_create(keyword):
     )
 
     # # 생성된 이미지의 URL 추출
-    # aisticker_url = url_response.data[0].url  # 이미지 url 출력
+    aisticker_url = url_response.data[0].url  # 이미지 url 출력
     # image_response = requests.get(aisticker_url)
     # dalleimage = Image.open(BytesIO(image_response.content))
     #
@@ -61,13 +61,12 @@ def aisticker_create(keyword):
     #
     # img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
 
-    return url_response
+    return aisticker_url
 
 @shared_task
 def save_aisticker_model(img_str, member_id, is_ai):
     ######################
-    aisticker_url = img_str.data[0].url  # 이미지 url 출력
-    image_response = requests.get(aisticker_url)
+    image_response = requests.get(img_str)
     dalleimage = Image.open(BytesIO(image_response.content))
 
     # 이미지를 메모리에 임시로 저장하기 위한 스트림 생성
