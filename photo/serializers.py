@@ -53,6 +53,11 @@ class TextBoxSerializer(serializers.Serializer):
     font = serializers.CharField(max_length=30)
 
 class DrawingSerializer(serializers.Serializer):
+    fill = serializers.CharField(max_length=30)
+    path = serializers.JSONField()
+    stroke = serializers.CharField(max_length=30)
+    strokeLineCap = serializers.CharField(max_length=30)
+    strokeWidth = serializers.IntegerField()
     x = serializers.FloatField()
     y = serializers.FloatField()
     size = serializers.IntegerField()
