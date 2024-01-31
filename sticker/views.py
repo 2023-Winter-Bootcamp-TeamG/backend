@@ -90,7 +90,7 @@ class StickerManageView(APIView):
             return Response({"error": "Invalid page or size parameter"}, status=status.HTTP_400_BAD_REQUEST)
 
         # 현재 사용자를 외래키로 가지는 Sticker들
-        stickers = Sticker.objects.filter(member_id=request.user, is_ai=False)
+        stickers = Sticker.objects.filter(member_id=request.user, is_ai=False, is_basic=False)
 
         paginator = Paginator(stickers, size)
 
