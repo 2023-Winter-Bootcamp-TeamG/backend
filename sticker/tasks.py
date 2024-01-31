@@ -12,6 +12,7 @@ import requests
 from PIL import Image
 from openai import OpenAI
 import re
+import requests
 
 @shared_task
 def save_sticker_model(input_image, extension, member_id, is_ai):
@@ -48,43 +49,22 @@ def aisticker_create(keyword):
         size="1024x1024"
     )
 
-    # # 생성된 이미지의 URL 추출
-    aisticker_url = url_response['data'][0]['url']  # 이미지 url 출력
-    # image_response = requests.get(aisticker_url)
-    # dalleimage = Image.open(BytesIO(image_response.content))
-    #
-    # # 이미지를 메모리에 임시로 저장하기 위한 스트림 생성
-    # buffered = BytesIO()
-    #
-    # # dalleimage를 BytesIO 스트림에 저장
-    # dalleimage.save(buffered, format="JPEG")
-    #
-    # img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
+    # 생성된 이미지의 URL 추출
+    aisticker_url = str(url_response.data[0].url)  # 이미지 url 출력
 
     return aisticker_url
 
 @shared_task
 def save_aisticker_model(img_str, member_id, is_ai):
-    ######################
-    image_response = requests.get(img_str)
-    dalleimage = Image.open(BytesIO(image_response.content))
 
-    # 이미지를 메모리에 임시로 저장하기 위한 스트림 생성
-    buffered = BytesIO()
-
-    # dalleimage를 BytesIO 스트림에 저장
-    dalleimage.save(buffered, format="PNG")
-
-    img_result = base64.b64encode(buffered.getvalue()).decode('utf-8')
-    #################################
     # 이미지 데이터 디코딩
-    input_image = base64.b64decode(img_result)
+    input_image = requests.get(img_str)
 
     # 고유한 파일명 생성(S3는 같은 이름의 파일을 업로드할 시 덮어쓰기 때문)
     image_name = f"{uuid.uuid4()}.png"
 
     # 변환된 바이트 데이터의 배경 제거
-    output_image = remove(input_image)
+    output_image = remove(input_image.content)
 
     # S3에 업로드 할 최종 이미지
     output_image_file = ContentFile(output_image, name=image_name)
