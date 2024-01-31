@@ -41,19 +41,17 @@ class PositionSerializer(serializers.Serializer):
 
 class PathSerializer(serializers.Serializer):
     command = serializers.CharField(max_length=10)
-    points = serializers.JSONField()
-
-    def to_representation(self, instance):
-        # 데이터를 시리얼라이징할 때의 로직
-        representation = [instance.command] + instance.points
-        return representation
+    points = serializers.ListField(child=serializers.FloatField())
 
     def to_internal_value(self, data):
-        # 데이터를 디시리얼라이징할 때의 로직
-        # 예: ['M', 120.12412421, 124.129874, 134.129487] -> Path 객체로 변환
         command = data[0]
         points = data[1:]
         return {'command': command, 'points': points}
+
+    def to_representation(self, instance):
+        representation = [instance.command] + instance.points
+        return representation
+
 
 class UsedStickerSerializer(serializers.Serializer):
     url = serializers.URLField()
