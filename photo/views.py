@@ -71,6 +71,8 @@ class PhotoManageView(APIView):
         stickers_data = request.data.get('stickers', []) # 스티커들을 배열형태로 저장
         textboxes_data = request.data.get('textboxes', []) # 텍스트박스들을 배열형태로 저장
         drawings_data = request.data.get('drawings', []) # 드로잉들을 배열형태로 저장
+        width_data = request.data.get('width')
+        height_data = request.data.get('height')
         # 접두사 부분과 데이터 부분 분리
         photo_match = re.match(r'data:image/(?P<format>\w+);base64,(?P<data>.+)', photo_data_with_prefix)
         result_photo_match = re.match(r'data:image/(?P<format>\w+);base64,(?P<data>.+)', result_photo_data_with_prefix)
@@ -96,7 +98,7 @@ class PhotoManageView(APIView):
         except Exception as e:
             return Response({"error": "Invalid image data: " + str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        save_photo_model.delay(member_id, photo_data, photo_extension, result_photo_data, result_photo_extension, stickers_data, textboxes_data, drawings_data, result_photo_title)
+        save_photo_model.delay(member_id, photo_data, photo_extension, result_photo_data, result_photo_extension, stickers_data, textboxes_data, drawings_data, result_photo_title, width_data, height_data)
 
         return Response({"message": "Save processing started"}, status=status.HTTP_202_ACCEPTED)
 

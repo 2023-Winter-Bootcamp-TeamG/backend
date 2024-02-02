@@ -8,7 +8,7 @@ from myproject import settings
 from .serializers import CustomedPhotoSerializer
 
 @shared_task
-def save_photo_model(member_id, photo_data, photo_extension, result_photo_data, result_photo_extension, stickers_data, textboxes_data, drawings_data, result_photo_title):
+def save_photo_model(member_id, photo_data, photo_extension, result_photo_data, result_photo_extension, stickers_data, textboxes_data, drawings_data, result_photo_title, width_data, height_data):
     photo_name = f"{uuid.uuid4()}{photo_extension}"
     result_photo_name = f"{uuid.uuid4()}{result_photo_extension}"
 
@@ -36,6 +36,8 @@ def save_photo_model(member_id, photo_data, photo_extension, result_photo_data, 
     if serializer.is_valid():
         serializer.validated_data['user_id'] = member_id
         serializer.validated_data['photo_id'] = photo.id
+        serializer.validated_data['width'] = width_data
+        serializer.validated_data['height'] = height_data
         serializer.save()
     else:
         raise ValueError("Invalid customed photo data")
