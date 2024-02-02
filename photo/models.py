@@ -74,6 +74,8 @@ class CustomedPhoto(djongo_models.Model):
     stickers = djongo_models.JSONField()  # UsedSticker 데이터를 JSON 형태로 저장
     textboxes = djongo_models.JSONField()  # TextBox 데이터를 JSON 형태로 저장
     drawings = djongo_models.JSONField() # Drawing 데이터를 JSON 형태로 저장
+    width = djongo_models.IntegerField()
+    height = djongo_models.IntegerField()
     class Meta:
         managed = False
 

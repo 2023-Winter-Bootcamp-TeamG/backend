@@ -92,7 +92,7 @@ class CustomedPhotoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomedPhoto
-        fields = ['photo_url', 'stickers', 'textboxes', 'drawings']
+        fields = ['photo_url', 'stickers', 'textboxes', 'drawings', 'width', 'height']
 
     def create(self, validated_data):
         stickers_data = validated_data.pop('stickers', [])
