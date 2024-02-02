@@ -22,7 +22,7 @@ import re
 import qrcode
 from io import BytesIO
 import base64
-from .serializers import QrSerializer
+from .serializers import QrSerializer, CustomedPhotoGetSerializer
 from .serializers import CustomedPhotoSerializer
 
 # Create your views here.
@@ -204,7 +204,7 @@ class PhotoEditView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         # Photo 객체를 직렬화
-        serializer = CustomedPhotoSerializer(customed_photo)
+        serializer = CustomedPhotoGetSerializer(customed_photo)
 
         # 직렬화된 데이터를 응답으로 반환
         return Response(serializer.data)

@@ -119,3 +119,11 @@ class CustomedPhotoSerializer(serializers.ModelSerializer):
         instance.save(using='mongodb')
         return instance
 
+class CustomedPhotoGetSerializer(serializers.ModelSerializer):
+    stickers = UsedStickerSerializer(many=True)
+    textboxes = TextBoxSerializer(many=True)
+    drawings = DrawingSerializer(many=True)
+
+    class Meta:
+        model = CustomedPhoto
+        fields = ['photo_url', 'stickers', 'textboxes', 'drawings', 'width', 'height']
